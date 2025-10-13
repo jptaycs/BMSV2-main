@@ -117,5 +117,13 @@ func APIRoutes(router *gin.Engine) {
 			govDocs.PATCH("/:id", controller.GovDocs.Patch)
 			govDocs.DELETE("", controller.GovDocs.Delete)
 		}
+		youth := api.Group("/youths")
+		{
+			youth.GET("", controller.Youth.Get)
+			youth.GET("/:id", controller.Youth.Get)
+			youth.POST("", controller.Youth.Post)
+			youth.PATCH("/:id", controller.Youth.Patch)
+			youth.DELETE("", controller.Youth.Delete)
+		}
 	}
 }

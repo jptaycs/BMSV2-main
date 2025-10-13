@@ -49,7 +49,7 @@ func StartServer() {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://192.168.1.2621420", "http://192.168.123.53:1420", "http://localhost:1420", "http://192.168.123.39:1420", "http://192.168.123.35:1420"},
+		AllowOrigins:     []string{"http://192.168.1.5.1420", "http://192.168.123.53:1420", "http://localhost:1420", "http://192.168.123.39:1420", "http://192.168.123.35:1420"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
