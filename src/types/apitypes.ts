@@ -1,0 +1,216 @@
+import { ResProps } from "@/service/api/household/getHousehold"
+
+export type User = {
+  Username: string
+  Role: string
+  ID: number
+}
+
+export type Resident = {
+  Firstname: string
+  Middlename: string
+  Lastname: string
+  Suffix: string
+  CivilStatus: string
+  Gender: "Male" | "Female" | ""
+  Nationality: string
+  Religion: string
+  Barangay: string
+  Occupation: string
+  Zone: number
+  Town: string,
+  Province: string,
+  Status: "Active" | "Dead" | "Missing" | "Moved Out" | ""
+  Birthplace: string
+  EducationalAttainment: string
+  Birthday: Date
+  IsVoter: boolean
+  IsPWD: boolean
+  IsSolo: boolean
+  IsSenior: boolean
+  Image: File | null
+  AvgIncome: number
+  MobileNumber: string
+  ID?: number
+}
+
+export type Income = {
+  ID: number
+  Category: string
+  Type: string
+  Amount: number
+  OR: string
+  ReceivedFrom: string
+  ReceivedBy: string
+  DateReceived: Date
+}
+
+export type Expense = {
+  ID: number
+  Category: string
+  Type: string
+  Amount: number
+  OR: string
+  PaidTo: string
+  PaidBy: string
+  Date: Date
+};
+
+export type Event = {
+  Name: string
+  Type: string
+  Venue: string
+  Audience: string
+  Notes: string
+  Status: "Upcoming" | "Ongoing" | "Cancelled" | "Finished"
+  Date: Date
+  ID: number
+}
+
+export type ProgramProject = {
+  Name: string
+  Type: "Program" | "Project"
+  Venue: string
+  Audience: string
+  Notes: string
+  Status: "Planned" | "Ongoing" | "Completed" | "Cancelled"
+  Date: Date
+  ID: number
+  Budget: number
+  SourceOfFunds: string
+  ProjectManager: string
+  StartDate: Date
+  EndDate: Date
+  Duration: number
+  Beneficiaries: string
+  Location: string
+  Description?: string
+}
+
+export type Certificate = {
+  ID?: number;
+  ResidentID?: number;
+  ResidentName?: string;
+  Type: string;
+  Amount: number;
+  IssuedDate: string;
+  OwnershipText?: string;
+  CivilStatus?: string;
+  Purpose?: string;
+  Age?: number;
+};
+
+export type Blotter = {
+  ID: number;
+  Type: string;
+  ReportedBy: string;
+  Involved: string;
+  IncidentDate: Date;
+  Location: string;
+  Zone: string;
+  Status: string;
+  Narrative: string;
+  Action: string;
+  Witnesses: string;
+  Evidence: string;
+  Resolution: string;
+  HearingDate: Date;
+};
+
+export type Official = {
+  ID: number;
+  Name: string;
+  Role: string;
+  Image: string;
+  Section: string;
+  Age: number;
+  Contact: string;
+  TermStart: string;
+  TermEnd: string;
+  Zone: string;
+};
+
+export type Settings = {
+  ID?: number;
+  Barangay?: string;
+  Municipality?: string;
+  Province?: string;
+  PhoneNumber?: string;
+  Email?: string;
+  ImageB?: string;
+  ImageM?: string;
+};
+
+export type Logbook = {
+  ID: number;
+  Name: string;
+  Date: Date;
+  TimeInAm?: string;
+  TimeOutAm?: string;
+  TimeInPm?: string;
+  TimeOutPm?: string;
+  Remarks?: string;
+  Status?: string;
+  TotalHours?: number;
+};
+
+export type Household = {
+  id?: number;
+  household_number: string;
+  type: string;
+  member: ResProps[];
+  residents?: ResProps[];
+  head: string;
+  zone: string;
+  date: Date;
+  status: "Moved Out" | "Active" | string;
+  selected_resident?: string[]; // optional list of selected members
+};
+
+
+export type GovDoc = {
+  ID: number;
+  Title: string;
+  Type: "Executive Order" | "Resolution" | "Ordinance";
+  DateIssued: Date;
+  Description: string;
+  Image: string; // URL or base64
+};
+
+export type Youth = {
+  ID?: number;
+  Firstname?: string;
+  Middlename?: string | null;
+  Lastname?: string;
+  Suffix?: string | null;
+  CivilStatus?: string;
+  Gender?: "Male" | "Female" | "";
+  Birthday?: Date | null;
+  Zone?: number | null;
+  Address?: string | null;
+  EmailAddress?: string | null;
+  ContactNumber?: string | null;
+  EducationalBackground?:
+    | "Elementary Level"
+    | "Elementary Grad"
+    | "High School Level"
+    | "High School Grad"
+    | "Vocational Grad"
+    | "College Level"
+    | "College Grad"
+    | "";
+  WorkStatus?:
+    | "Employed"
+    | "Unemployed"
+    | "Self-Employed"
+    | "Currently looking for a job"
+    | "Not interested looking for a job"
+    | "";
+  InSchoolYouth?: boolean;
+  OutOfSchoolYouth?: boolean;
+  WorkingYouth?: boolean;
+  YouthWithSpecificNeeds?: boolean;
+  IsSKVoter?: boolean;
+  Image?: File | null;
+  AgeGroup?: "Child Youth" | "Core Youth" | "Young Adult" | "";
+};
