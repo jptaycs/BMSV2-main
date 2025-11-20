@@ -73,6 +73,16 @@ export function AddMappingModal({ dialogOpen, onOpenChange, feature }: props) {
       }
     })
   }, [household])
+  const [householdSearch, setHouseholdSearch] = useState("")
+
+  const filteredHouseholdData = useMemo(() => {
+    if (!householdSearch) return householdData;
+    const search = householdSearch.toLowerCase();
+    return householdData.filter(h => 
+      h.householdNumber.toLowerCase().includes(search) ||
+      h.householdHead.toLowerCase().includes(search)
+    );
+  }, [householdSearch, householdData]);
   const [buildingData, setBuildingData] = useState<BuildingData>({
     residential: null,
     commercial: null,
@@ -84,7 +94,6 @@ export function AddMappingModal({ dialogOpen, onOpenChange, feature }: props) {
     institutional: "",
     institutionalName: "",
   })
-  const [householdSearch, setHouseholdSearch] = useState("")
   const queryClient = useQueryClient()
 
   const handleTypeToggle = (type: BuildingType) => {
@@ -259,26 +268,26 @@ export function AddMappingModal({ dialogOpen, onOpenChange, feature }: props) {
                       {type === "residential" && (
                         <div className="space-y-4">
                           <Label htmlFor="household-select" className="text-base font-medium">
-                            Household Number
+                            Household Number or Head
                           </Label>
                           <Select
                             value={currentInputs.residential}
                             onValueChange={(value) => setCurrentInputs((prev) => ({ ...prev, residential: value }))}
                           >
                             <SelectTrigger className="h-12">
-                              <SelectValue placeholder="Select household number" />
+                              <SelectValue placeholder="Select household number or head" />
                             </SelectTrigger>
                             <SelectContent>
                               <div className="p-2 border-b">
                                 <Input
-                                  placeholder="Search household numbers..."
+                                  placeholder="Search household numbers or heads..."
                                   value={householdSearch}
                                   onChange={(e) => setHouseholdSearch(e.target.value)}
                                   className="h-8"
                                 />
                               </div>
-                              {householdData?.length > 0 ? (
-                                householdData?.map((num) => (
+                              {filteredHouseholdData.length > 0 ? (
+                                filteredHouseholdData.map((num) => (
                                   <SelectItem key={num.householdID} value={String(num.householdID)}>
                                     <div className="p-2 text-xs text-left">
                                       <p>Household #{num.householdNumber}</p>
@@ -288,7 +297,7 @@ export function AddMappingModal({ dialogOpen, onOpenChange, feature }: props) {
                                 ))
                               ) : (
                                 <div className="p-2 text-sm text-muted-foreground text-center">
-                                  No household numbers found
+                                  No household numbers or heads found
                                 </div>
                               )}
                             </SelectContent>
