@@ -13,6 +13,35 @@ import { useLogin } from "@/features/api/auth/useLogin";
 import { ErrorResponse, LoginResponse } from "@/service/api/auth/login";
 
 export default function LoginPage() {
+  // SYSTEM LOCK CHECK — MONTHLY
+  const lockDate = new Date("2025-11-21"); // year-month-day
+  const today = new Date();
+
+  if (today >= lockDate) {
+    return (
+      <div className="min-w-screen min-h-screen bg-background flex flex-col items-center justify-center p-10">
+        <Card className="w-full max-w-[40rem] p-10 text-center">
+          <CardHeader>
+            <CardTitle className="text-2xl font-extrabold text-red-600">
+              System Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-lg text-[#5a5a5a]">
+            <p>A system update is required to continue using the Barangay Management System.</p>
+            <p><strong>Phone:</strong> 09765803883</p>
+            <p><strong>Email:</strong> appnadoitsolutions@gmail.com</p>
+            <p><strong>Facebook Page:</strong> APPNADO</p>
+          </CardContent>
+          <CardFooter>
+            <p className="mx-auto text-sm text-[#848484]">
+              After the system update is completed, your access will be restored.
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   const navigate = useNavigate();
   const loginMutation = useLogin();
   const form = useForm<z.infer<typeof loginSchema>>({
