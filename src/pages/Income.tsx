@@ -11,6 +11,14 @@ import Filter from "@/components/ui/filter";
 import Searchbar from "@/components/ui/searchbar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 import AddIncomeModal from "@/features/income/addIncomeModal";
 import ViewIncomeModal from "@/features/income/viewIncomeModal";
 import { useIncome } from "@/features/api/income/useIncome";
@@ -84,254 +92,189 @@ export default function IncomeNewPage() {
     return sorted;
   }, [searchParams, income, searchQuery]);
   const [viewIncomeId, setViewIncomeId] = useState<number | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState<{
+    filename: string;
+    filter: string;
+    data: Income[];
+  } | null>(null);
+
+  const handleDownloadPDF = async (filename: string, filter: string, data: Income[]) => {
+    setIsDownloading(true);
+    const toastId = toast.loading("Generating PDF, please wait...");
+    try {
+      const blob = await pdf(<IncomePDF filter={filter} incomes={data} />).toBlob();
+      const buffer = await blob.arrayBuffer();
+      const contents = new Uint8Array(buffer);
+      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
+
+      toast.success(`${filter} PDF downloaded`, {
+        description: "Saved in Documents folder",
+        id: toastId,
+      });
+    } catch (e) {
+      toast.error(`Failed to save ${filter} PDF`, { id: toastId });
+    } finally {
+      setIsDownloading(false);
+      setTimeout(() => window.location.reload(), 1000);
+    }
+  };
+
+  const confirmDownload = () => {
+    if (!pendingDownload) return;
+    const { filename, filter, data } = pendingDownload;
+    setPendingDownload(null);
+    handleDownloadPDF(filename, filter, data);
+  };
+
+  const cancelDownload = () => setPendingDownload(null);
 
   return (
     <>
       {/* Summary Cards */}
       <div className="flex flex-wrap gap-5 justify-around mb-5 mt-1">
-        <SummaryCardIncome
-          title="Total Revenue"
-          value={new Intl.NumberFormat("en-US").format(
-            filteredData.reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<DollarSign size={50} />}
-          onClick={async () => {
-            const blob = await pdf(
-              <IncomePDF filter="All Income" incomes={filteredData} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("IncomeRecords.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Income Record successfully downloaded", {
-                description: "Income record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Income record",
-              });
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Total Revenue"
+            value={new Intl.NumberFormat("en-US").format(
+              filteredData.reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<DollarSign size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "IncomeRecords.pdf",
+                filter: "All Income",
+                data: filteredData,
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Local Revenue"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Local Revenue")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Banknote size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Local Revenue"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Local Revenue" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("LocalRevenue.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Local Revenue PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Local Revenue PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Local Revenue"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Local Revenue")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Banknote size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "LocalRevenue.pdf",
+                filter: "Local Revenue",
+                data: filteredData.filter((d) => d.Category === "Local Revenue"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Tax Revenue"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Tax Revenue")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<PiggyBank size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Tax Revenue"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Tax Revenue" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("TaxRevenue.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Tax Revenue PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Tax Revenue PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Tax Revenue"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Tax Revenue")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<PiggyBank size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "TaxRevenue.pdf",
+                filter: "Tax Revenue",
+                data: filteredData.filter((d) => d.Category === "Tax Revenue"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Water System"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Water System")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Droplets size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Water System"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Water System" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("GovernmentGrants.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Water System PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Water System PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Water System"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Water System")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Droplets size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "GovernmentGrants.pdf",
+                filter: "Water System",
+                data: filteredData.filter((d) => d.Category === "Water System"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Service Revenue"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Service Revenue")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Coins size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Service Revenue"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Service Revenue" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("ServiceRevenue.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Service Revenue PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Service Revenue PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Service Revenue"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Service Revenue")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Coins size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "ServiceRevenue.pdf",
+                filter: "Service Revenue",
+                data: filteredData.filter((d) => d.Category === "Service Revenue"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Rental Income"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Rental Income")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Wallet size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Rental Income"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Rental Income" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("RentalIncome.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Rental Income PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Rental Income PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Rental Income"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Rental Income")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Wallet size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "RentalIncome.pdf",
+                filter: "Rental Income",
+                data: filteredData.filter((d) => d.Category === "Rental Income"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Government Funds (IRA)"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Government Funds")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Layers size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Government Funds"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Government Funds" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("GovernmentFunds.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Government Funds PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Government Funds PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Government Funds (IRA)"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Government Funds")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Layers size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "GovernmentFunds.pdf",
+                filter: "Government Funds",
+                data: filteredData.filter((d) => d.Category === "Government Funds"),
+              })
             }
-          }}
-        />
-        <SummaryCardIncome
-          title="Others"
-          value={Intl.NumberFormat("en-US").format(
-            filteredData
-              .filter((d) => d.Category === "Others")
-              .reduce((acc, item) => acc + item.Amount, 0)
-          )}
-          icon={<Shirt size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Others"
-            );
-            const blob = await pdf(
-              <IncomePDF filter="Others" incomes={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("Others.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Others PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Others PDF",
-              });
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardIncome
+            title="Others"
+            value={Intl.NumberFormat("en-US").format(
+              filteredData
+                .filter((d) => d.Category === "Others")
+                .reduce((acc, item) => acc + item.Amount, 0)
+            )}
+            icon={<Shirt size={50} />}
+            onClick={() =>
+              setPendingDownload({
+                filename: "Others.pdf",
+                filter: "Others",
+                data: filteredData.filter((d) => d.Category === "Others"),
+              })
             }
-          }}
-        />
+          />
+        </div>
       </div>
       
       <div className="flex gap-5 w-full items-center justify-center mb-0">
@@ -453,6 +396,30 @@ export default function IncomeNewPage() {
           open={true}
           onClose={() => setViewIncomeId(null)}
         />
+      )}
+      {pendingDownload && (
+        <Dialog open={true} onOpenChange={cancelDownload}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-black">Confirm Download</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to download the {pendingDownload.filter} PDF?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <DialogClose asChild>
+                <Button variant="ghost" className="text-black" onClick={cancelDownload}>
+                  Cancel
+                </Button>
+              </DialogClose>
+
+              <Button onClick={confirmDownload} disabled={isDownloading}>
+                {isDownloading ? "Downloading..." : "Confirm"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
