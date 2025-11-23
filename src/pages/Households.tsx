@@ -20,6 +20,14 @@ import { useHousehold } from "@/features/api/household/useHousehold";
 import ViewHouseholdModal from "@/features/households/viewHouseholdModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDeleteHousehold } from "@/features/api/household/useDeleteHousehold";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const filters = ["All Households", "Numerical", "Renter", "Owner"];
 
@@ -75,27 +83,27 @@ const columns: ColumnDef<Household>[] = [
   },
 ];
 
-
 export default function Households() {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHousehold, setSelectedHousehold] = useState<number[]>([]);
-  const { data: household, isFetching } = useHousehold()
-  const [viewHouseholdId, setViewHouseholdId] = useState<number | null>(null)
-  const deleteMutation = useDeleteHousehold()
-  const queryClient = useQueryClient()
+  const { data: household, isFetching } = useHousehold();
+  const [viewHouseholdId, setViewHouseholdId] = useState<number | null>(null);
+  const deleteMutation = useDeleteHousehold();
+  const queryClient = useQueryClient();
+
   const parsedData = useMemo(() => {
-    if (isFetching || !household || !household.households) return []
+    if (isFetching || !household || !household.households) return [];
     return household.households.map((household) => {
-      const member = household.residents.map(r => ({
+      const member = household.residents.map((r) => ({
         ID: r.id,
         Firstname: r.firstname,
         Lastname: r.lastname,
         Role: r.role,
         Income: r.income,
       }));
-      const head = household.residents.find(r => r.role.toLowerCase() === "head");
+      const head = household.residents.find((r) => r.role.toLowerCase() === "head");
       return {
         id: household.id,
         household_number: household.household_number,
@@ -108,6 +116,15 @@ export default function Households() {
       };
     });
   }, [household, isFetching]);
+
+  // Download loading and confirmation states
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState<{
+    filename: string;
+    filter: string;
+    filteredHouseholds: Household[];
+  } | null>(null);
+
   const handleSortChange = (sortValue: string) => {
     searchParams.set("sort", sortValue);
     setSearchParams(searchParams);
@@ -128,105 +145,108 @@ export default function Households() {
     }
     return sorted;
   }, [searchParams, searchQuery, parsedData]);
-  
+
+  // Download PDF logic from Residents page adapted
+  const downloadPDF = async (filename: string, filter: string, filteredHouseholds: Household[]) => {
+    setIsDownloading(true);
+    const toastId = toast.loading("Generating PDF, please wait...");
+    try {
+      const blob = await pdf(<HouseholdPDF filter={filter} households={filteredHouseholds} />).toBlob();
+      const buffer = await blob.arrayBuffer();
+      const contents = new Uint8Array(buffer);
+      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
+      toast.success(`${filter} PDF downloaded`, {
+        description: "Saved in Documents folder",
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(`Failed to save ${filter} PDF`, {
+        id: toastId,
+      });
+    } finally {
+      setIsDownloading(false);
+      setPendingDownload(null);
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+  };
+
+  // Handlers to trigger confirmation dialog for download
+  const handleDownloadAllHouseholds = () =>
+    setPendingDownload({ filename: "AllHouseholds.pdf", filter: "All Households", filteredHouseholds: parsedData });
+
+  const handleDownloadActiveHouseholds = () =>
+    setPendingDownload({
+      filename: "ActiveHouseholds.pdf",
+      filter: "Active Households",
+      filteredHouseholds: parsedData.filter((d) => d.status === "Active"),
+    });
+
+  const handleDownloadRenterHouseholds = () =>
+    setPendingDownload({
+      filename: "RenterHouseholds.pdf",
+      filter: "Renter Households",
+      filteredHouseholds: parsedData.filter((d) => d.type === "Renter"),
+    });
+
+  const handleDownloadOwnerHouseholds = () =>
+    setPendingDownload({
+      filename: "OwnerHouseholds.pdf",
+      filter: "Owner Households",
+      filteredHouseholds: parsedData.filter((d) => d.type === "Owner"),
+    });
+
+  // Confirmation dialog handlers
+  const confirmDownload = () => {
+    if (!pendingDownload) return;
+    const { filename, filter, filteredHouseholds } = pendingDownload;
+    setPendingDownload(null);
+    downloadPDF(filename, filter, filteredHouseholds);
+  };
+
+  const cancelDownload = () => setPendingDownload(null);
+
   const totalActive = parsedData.filter((item) => item.status === "Active").length;
   const totalRenter = parsedData.filter((item) => item.type === "Renter").length;
   const totalOwner = parsedData.filter((item) => item.type === "Owner").length;
   const total = parsedData.length;
+
   return (
     <>
       <div className="flex flex-wrap gap-5 justify-around mb-5 mt-1">
-        <SummaryCard
-          title="Total Households"
-          value={total}
-          icon={<Users size={50} />}
-          onClick={async () => {
-            const blob = await pdf(<HouseholdPDF filter="All Households" households={parsedData} />).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("AllHouseholds.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("All Households PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the file",
-              });
-            }
-          }}
-        />
-        <SummaryCard
-          title="Active Households"
-          value={totalActive}
-          icon={<UserCheck size={50} />}
-          onClick={async () => {
-            const filtered = parsedData.filter((d) => d.status === "Active");
-            const blob = await pdf(<HouseholdPDF filter="Active Households" households={filtered} />).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("ActiveHouseholds.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Active Households PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Active Households PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCard
-          title="Renter"
-          value={totalRenter}
-          icon={<HomeIcon size={50} />}
-          onClick={async () => {
-            const filtered = parsedData.filter((d) => d.type === "Renter");
-            const blob = await pdf(<HouseholdPDF filter="Renter Households" households={filtered} />).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("RenterHouseholds.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Renter Households PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Renter Households PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCard
-          title="Owner"
-          value={totalOwner}
-          icon={<Home size={50} />}
-          onClick={async () => {
-            const filtered = parsedData.filter((d) => d.type === "Owner");
-            const blob = await pdf(<HouseholdPDF filter="Owner Households" households={filtered} />).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("OwnerHouseholds.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Owner Households PDF saved", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Owner Households PDF",
-              });
-            }
-          }}
-        />
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCard
+            title="Total Households"
+            value={total}
+            icon={<Users size={50} />}
+            onClick={handleDownloadAllHouseholds}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCard
+            title="Active Households"
+            value={totalActive}
+            icon={<UserCheck size={50} />}
+            onClick={handleDownloadActiveHouseholds}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCard
+            title="Renter"
+            value={totalRenter}
+            icon={<HomeIcon size={50} />}
+            onClick={handleDownloadRenterHouseholds}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? "none" : "auto", opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCard
+            title="Owner"
+            value={totalOwner}
+            icon={<Home size={50} />}
+            onClick={handleDownloadOwnerHouseholds}
+          />
+        </div>
       </div>
 
       <div className="flex gap-5 w-full items-center justify-center">
@@ -236,12 +256,7 @@ export default function Households() {
           classname="flex flex-5"
         />
 
-        <Filter
-          onChange={handleSortChange}
-          filters={filters}
-          initial="All Households"
-          classname="flex-1"
-        />
+        <Filter onChange={handleSortChange} filters={filters} initial="All Households" classname="flex-1" />
         <Button
           variant="destructive"
           size="lg"
@@ -249,30 +264,31 @@ export default function Households() {
           onClick={() => {
             if (selectedHousehold) {
               toast.promise(
-                deleteMutation.mutateAsync(selectedHousehold), {
-                loading: "Deleting household, Please wait...",
-                success: () => {
-                  queryClient.invalidateQueries({ queryKey: ['household'] })
-                  setRowSelection((prevSelection) => {
-                    const newSelection = { ...prevSelection };
-                    selectedHousehold.forEach((_, i) => {
-                      delete newSelection[i];
+                deleteMutation.mutateAsync(selectedHousehold),
+                {
+                  loading: "Deleting household, Please wait...",
+                  success: () => {
+                    queryClient.invalidateQueries({ queryKey: ["household"] });
+                    setRowSelection((prevSelection) => {
+                      const newSelection = { ...prevSelection };
+                      selectedHousehold.forEach((_, i) => {
+                        delete newSelection[i];
+                      });
+                      return newSelection;
                     });
-                    return newSelection;
-                  });   
-                  setSelectedHousehold([])
-                  return {
-                    message: "Household successfully deleted"
-                  }
-                },
-                error: (error: any) => {
-                  return {
-                    message: "Failed to delete households",
-                    description: error?.response?.data?.message || error.message
-                  }
+                    setSelectedHousehold([]);
+                    return {
+                      message: "Household successfully deleted",
+                    };
+                  },
+                  error: (error: any) => {
+                    return {
+                      message: "Failed to delete households",
+                      description: error?.response?.data?.message || error.message,
+                    };
+                  },
                 }
-              }
-              )
+              );
             }
           }}
         >
@@ -298,9 +314,9 @@ export default function Households() {
                       : false
                 }
                 onCheckedChange={(value) => {
-                  table.toggleAllPageRowsSelected(!!value)
-                  if(value){
-                    const allVisibleRows = table.getRowModel().rows.map(row => row.original.id);
+                  table.toggleAllPageRowsSelected(!!value);
+                  if (value) {
+                    const allVisibleRows = table.getRowModel().rows.map((row) => row.original.id);
                     setSelectedHousehold(allVisibleRows);
                   } else {
                     setSelectedHousehold([]);
@@ -314,13 +330,11 @@ export default function Households() {
               <Checkbox
                 checked={row.getIsSelected()}
                 onCheckedChange={(value) => {
-                  row.toggleSelected(!!value)
-                  if(value){
+                  row.toggleSelected(!!value);
+                  if (value) {
                     setSelectedHousehold((prev) => [...prev, row.original.id]);
-                  }else {
-                    setSelectedHousehold((prev) =>
-                    prev.filter((id) => id !== row.original.id)
-                    );
+                  } else {
+                    setSelectedHousehold((prev) => prev.filter((id) => id !== row.original.id));
                   }
                 }}
                 aria-label="Select row"
@@ -345,11 +359,29 @@ export default function Households() {
         onRowSelectionChange={setRowSelection}
       />
       {viewHouseholdId !== null && (
-        <ViewHouseholdModal
-          household={parsedData.find((e => e.id === viewHouseholdId))}
-          open={true}
-          onClose={() => setViewHouseholdId(null)}
-        />
+        <ViewHouseholdModal household={parsedData.find((e) => e.id === viewHouseholdId)} open={true} onClose={() => setViewHouseholdId(null)} />
+      )}
+      {pendingDownload && (
+        <Dialog open={true} onOpenChange={cancelDownload}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-black">Confirm Download</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to download the {pendingDownload.filter} PDF?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3 mt-4">
+              <DialogClose asChild>
+                <Button variant="ghost" className="text-black" onClick={cancelDownload}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button onClick={confirmDownload} disabled={isDownloading}>
+                {isDownloading ? "Downloading..." : "Confirm"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

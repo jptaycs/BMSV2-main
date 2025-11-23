@@ -21,6 +21,13 @@ import { useExpense } from "@/features/api/expense/useExpense";
 import { useDeleteExpense } from "@/features/api/expense/useDeleteExpense";
 import { Expense } from "@/types/apitypes";
 import FormsModal from "@/features/expense/formsModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const filters = [
   "All Expense",
@@ -96,6 +103,35 @@ export default function ExpenseNewPage() {
     return sorted;
   }, [searchParams, expense, searchQuery]);
   const [viewExpenseId, setViewExpenseId] = useState<number | null>(null);
+  const [confirmDownload, setConfirmDownload] = useState(false);
+  const [downloadAction, setDownloadAction] = useState<null | (() => Promise<void>)>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const startDownload = async (callback: () => Promise<void>) => {
+    setConfirmDownload(true);
+    setDownloadAction(() => callback);
+  };
+
+  const handleConfirmDownload = async () => {
+    if (!downloadAction) return;
+    setIsDownloading(true);
+    setConfirmDownload(false);
+
+    try {
+      await downloadAction();
+      toast.success("PDF downloaded", {
+        description: "Saved in Documents folder",
+      });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch {
+      toast.error("Download failed");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <>
@@ -106,24 +142,19 @@ export default function ExpenseNewPage() {
             filteredData.reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<DollarSign size={50} />}
-          onClick={async () => {
-            try {
+          onClick={() =>
+            startDownload(async () => {
               const blob = await pdf(
                 <ExpensePDF filter="All Expenses" expenses={filteredData} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "ExpenseRecords.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported All Expenses to ExpenseRecords.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export All Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Infrastructure Expenses"
@@ -133,30 +164,25 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Landmark size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Infrastructure"
-            );
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter(
+                (d) => d.Category === "Infrastructure"
+              );
               const blob = await pdf(
                 <ExpensePDF
                   filter="Infrastructure Expenses"
                   expenses={filtered}
                 />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "InfrastructureExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Infrastructure Expenses to InfrastructureExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Infrastructure Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Honoraria"
@@ -166,27 +192,22 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<PiggyBank size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Honoraria"
-            );
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter(
+                (d) => d.Category === "Honoraria"
+              );
               const blob = await pdf(
                 <ExpensePDF filter="Honoraria Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "HonorariaExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Honoraria Expenses to HonorariaExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Honoraria Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Utilities"
@@ -196,27 +217,22 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Wallet size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Utilities"
-            );
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter(
+                (d) => d.Category === "Utilities"
+              );
               const blob = await pdf(
                 <ExpensePDF filter="Utilities Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "UtilitiesExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Utilities Expenses to UtilitiesExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Utilities Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Local Funds Used"
@@ -226,27 +242,22 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Banknote size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Local Funds"
-            );
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter(
+                (d) => d.Category === "Local Funds"
+              );
               const blob = await pdf(
                 <ExpensePDF filter="Local Funds Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "LocalFundsExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Local Funds Expenses to LocalFundsExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Local Funds Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Foods"
@@ -256,25 +267,20 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Salad size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter((d) => d.Category === "Foods");
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter((d) => d.Category === "Foods");
               const blob = await pdf(
                 <ExpensePDF filter="Foods Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "FoodsExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Foods Expenses to FoodsExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Foods Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="IRA Used"
@@ -284,23 +290,18 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Layers size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter((d) => d.Category === "IRA");
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter((d) => d.Category === "IRA");
               const blob = await pdf(
                 <ExpensePDF filter="IRA Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
-              await writeFile("IRAExpenses.pdf", new Uint8Array(arrayBuffer), {
+              const buffer = await blob.arrayBuffer();
+              await writeFile("IRAExpenses.pdf", new Uint8Array(buffer), {
                 baseDir: BaseDirectory.Document,
               });
-              toast.success(
-                "Successfully exported IRA Expenses to IRAExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export IRA Expenses");
-            }
-          }}
+            })
+          }
         />
         <SummaryCardExpense
           title="Others"
@@ -310,27 +311,22 @@ export default function ExpenseNewPage() {
               .reduce((acc, item) => acc + item.Amount, 0)
           )}
           icon={<Shirt size={50} />}
-          onClick={async () => {
-            const filtered = filteredData.filter(
-              (d) => d.Category === "Others"
-            );
-            try {
+          onClick={() =>
+            startDownload(async () => {
+              const filtered = filteredData.filter(
+                (d) => d.Category === "Others"
+              );
               const blob = await pdf(
                 <ExpensePDF filter="Other Expenses" expenses={filtered} />
               ).toBlob();
-              const arrayBuffer = await blob.arrayBuffer();
+              const buffer = await blob.arrayBuffer();
               await writeFile(
                 "OtherExpenses.pdf",
-                new Uint8Array(arrayBuffer),
+                new Uint8Array(buffer),
                 { baseDir: BaseDirectory.Document }
               );
-              toast.success(
-                "Successfully exported Other Expenses to OtherExpenses.pdf"
-              );
-            } catch (error) {
-              toast.error("Failed to export Other Expenses");
-            }
-          }}
+            })
+          }
         />
       </div>
 
@@ -455,6 +451,30 @@ export default function ExpenseNewPage() {
           onClose={() => setViewExpenseId(null)}
         />
       )}
+
+      <Dialog open={confirmDownload} onOpenChange={setConfirmDownload}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-black">Confirm Download</DialogTitle>
+          </DialogHeader>
+          <p className="text-black">Do you want to download this PDF?</p>
+          <DialogFooter>
+            <Button
+              onClick={() => setConfirmDownload(false)}
+              disabled={isDownloading}
+              className="bg-gray-200 text-black"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? "Downloading..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

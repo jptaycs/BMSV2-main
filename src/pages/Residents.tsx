@@ -21,6 +21,14 @@ import { Resident } from "@/types/apitypes";
 import { ResidentPDF } from "@/components/pdf/residentpdf";
 import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const filters = [
   "All Residents",
@@ -113,272 +121,176 @@ export default function Residents() {
   const SoloParent = res.filter((r) => r.IsSolo).length;
   const IsPWD = res.filter((r) => r.IsPWD).length;
 
+  // Download loading state
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const [pendingDownload, setPendingDownload] = useState<{
+    filename: string;
+    filter: string;
+    filteredResidents: Resident[];
+  } | null>(null);
+
+  // Generic download handler with toast loading, success, and error
+  const handleDownloadPDF = async (
+    filename: string,
+    filter: string,
+    filteredResidents: Resident[]
+  ) => {
+    setIsDownloading(true);
+    const toastId = toast.loading("Generating PDF, please wait...");
+    try {
+      const casted: Resident[] = filteredResidents.map((r) => ({
+        ...r,
+        Birthday: typeof r.Birthday === "string" ? new Date(r.Birthday) : r.Birthday,
+      }));
+      const blob = await pdf(<ResidentPDF filter={filter} residents={casted} />).toBlob();
+      const buffer = await blob.arrayBuffer();
+      const contents = new Uint8Array(buffer);
+      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
+      toast.success(`${filter} PDF downloaded`, {
+        description: "Saved in Documents folder",
+        id: toastId,
+      });
+    } catch (e) {
+      toast.error(`Failed to save ${filter} PDF`, {
+        id: toastId,
+      });
+    } finally {
+      setIsDownloading(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  };
+
+  const handleDownloadAllResidents = () =>
+    setPendingDownload({ filename: "ResidentRecords.pdf", filter: "All Residents", filteredResidents: res });
+
+  const handleDownloadMaleResidents = () =>
+    setPendingDownload({
+      filename: "MaleResidents.pdf",
+      filter: "Male Residents",
+      filteredResidents: res.filter((r) => r.Gender === "Male"),
+    });
+
+  const handleDownloadFemaleResidents = () =>
+    setPendingDownload({
+      filename: "FemaleResidents.pdf",
+      filter: "Female Residents",
+      filteredResidents: res.filter((r) => r.Gender === "Female"),
+    });
+
+  const handleDownloadSeniorResidents = () =>
+    setPendingDownload({
+      filename: "SeniorResidents.pdf",
+      filter: "Senior Residents",
+      filteredResidents: res.filter((r) => r.IsSenior),
+    });
+
+  const handleDownloadPWDResidents = () =>
+    setPendingDownload({
+      filename: "PWDs.pdf",
+      filter: "PWD",
+      filteredResidents: res.filter((r) => r.IsPWD),
+    });
+
+  const handleDownloadSoloParents = () =>
+    setPendingDownload({
+      filename: "SoloParents.pdf",
+      filter: "Solo Parents",
+      filteredResidents: res.filter((r) => r.IsSolo),
+    });
+
+  const handleDownloadActiveResidents = () =>
+    setPendingDownload({
+      filename: "ActiveResidents.pdf",
+      filter: "Active Residents",
+      filteredResidents: res.filter((r) => r.Status === "Active"),
+    });
+
+  const handleDownloadMovedOutResidents = () =>
+    setPendingDownload({
+      filename: "MovedOutResidents.pdf",
+      filter: "Moved Out Residents",
+      filteredResidents: res.filter((r) => r.Status === "Moved Out"),
+    });
+
+  const confirmDownload = () => {
+    if (!pendingDownload) return;
+    const { filename, filter, filteredResidents } = pendingDownload;
+    setPendingDownload(null);
+    handleDownloadPDF(filename, filter, filteredResidents);
+  };
+
+  const cancelDownload = () => setPendingDownload(null);
+
   return (
     <>
       <div className="flex flex-wrap gap-5 justify-around mb-5 mt-1">
-        <SummaryCardResidents
-          title="Total Residents"
-          value={total}
-          icon={<Users size={50} />}
-          onClick={async () => {
-            const casted: Resident[] = res.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            })) as Resident[];
-
-            const blob = await pdf(
-              <ResidentPDF filter="All Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              writeFile("ResidentRecords.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Resident Record successfully downloaded", {
-                description: "Resident record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Resident record",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Male"
-          value={male}
-          icon={<Mars size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.Gender === "Male");
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Male Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("MaleResidents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Male Resident PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Male Resident PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Female"
-          value={female}
-          icon={<Venus size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.Gender === "Female");
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Female Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("FemaleResidents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Female Resident PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Female Resident PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Senior"
-          value={senior}
-          icon={<User size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.IsSenior);
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Senior Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("SeniorResidents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Senior Resident PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Senior Resident PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="PWD"
-          value={IsPWD}
-          icon={<Accessibility size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.IsVoter === true);
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="PWD" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("PWDs.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("PWDs PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save PWD PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Solo Parent"
-          value={SoloParent}
-          icon={<User size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.IsVoter === true);
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Solo Parents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("SoloParents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Solo Parents PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Solo Parents PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Active"
-          value={active}
-          icon={<UserCheck size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.Status === "Active");
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Active Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("ActiveResidents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Active Resident PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Active Resident PDF",
-              });
-            }
-          }}
-        />
-        <SummaryCardResidents
-          title="Moved Out"
-          value={movedOut}
-          icon={<UserMinus size={50} />}
-          onClick={async () => {
-            const filtered = res.filter((r) => r.Status === "Moved Out");
-            const casted: Resident[] = filtered.map((r) => ({
-              ...r,
-              Birthday:
-                typeof r.Birthday === "string"
-                  ? new Date(r.Birthday)
-                  : r.Birthday,
-            }));
-
-            const blob = await pdf(
-              <ResidentPDF filter="Moved Out Residents" residents={casted} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("MovedOutResidents.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Moved Out Resident PDF downloaded", {
-                description: "Saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save Moved Out Resident PDF",
-              });
-            }
-          }}
-        />
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Total Residents"
+            value={total}
+            icon={<Users size={50} />}
+            onClick={handleDownloadAllResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Male"
+            value={male}
+            icon={<Mars size={50} />}
+            onClick={handleDownloadMaleResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Female"
+            value={female}
+            icon={<Venus size={50} />}
+            onClick={handleDownloadFemaleResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Senior"
+            value={senior}
+            icon={<User size={50} />}
+            onClick={handleDownloadSeniorResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="PWD"
+            value={IsPWD}
+            icon={<Accessibility size={50} />}
+            onClick={handleDownloadPWDResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Solo Parent"
+            value={SoloParent}
+            icon={<User size={50} />}
+            onClick={handleDownloadSoloParents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Active"
+            value={active}
+            icon={<UserCheck size={50} />}
+            onClick={handleDownloadActiveResidents}
+          />
+        </div>
+        <div style={{ pointerEvents: isDownloading ? 'none' : 'auto', opacity: isDownloading ? 0.6 : 1 }}>
+          <SummaryCardResidents
+            title="Moved Out"
+            value={movedOut}
+            icon={<UserMinus size={50} />}
+            onClick={handleDownloadMovedOutResidents}
+          />
+        </div>
       </div>
 
       <div className="flex gap-5 w-full items-center justify-center">
@@ -500,6 +412,28 @@ export default function Residents() {
           open={true}
           onClose={() => setViewResidentId(null)}
         />
+      )}
+      {pendingDownload && (
+        <Dialog open={true} onOpenChange={cancelDownload}>
+          <DialogContent>
+            <DialogHeader>
+             <DialogTitle className="text-black">Confirm Download</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to download the {pendingDownload.filter} PDF?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3 mt-4">
+              <DialogClose asChild>
+                <Button variant="ghost" className="text-black" onClick={cancelDownload}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button onClick={confirmDownload} disabled={isDownloading}>
+                {isDownloading ? "Downloading..." : "Confirm"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
