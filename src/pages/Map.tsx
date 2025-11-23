@@ -1,3 +1,5 @@
+import Maharlika from "@/assets/geojson/Maharlika.json";
+import Pasacao from "@/assets/geojson/Pasacao.json";
 import Street from "@/assets/geojson/Street.json";
 import Border from "@/assets/geojson/Border.json";
 import Building from "@/assets/geojson/Building.json";
@@ -28,7 +30,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import Filter from "@/components/ui/filter";
 
-const center: LatLngExpression = [13.5870, 123.0428];
+const center: LatLngExpression = [13.579126, 123.063078];
 
 export default function Map() {
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
@@ -116,7 +118,7 @@ export default function Map() {
   };
 
   const onEachRoad = (road, layer) => {
-    const roadName = road.properties?.name || "Calawat Road";
+    const roadName = road.properties.name;
 
     layer.bindTooltip(roadName, { permanent: false, direction: "top", sticky: true });
     layer.on("mouseover", () => {
@@ -316,6 +318,16 @@ const onEachZone = (zone, layer) => {
         <GeoJSON data={Border.features as any} style={borderStyle} />
         <GeoJSON data={Zone.features as any} onEachFeature={onEachZone}/>
         <GeoJSON
+          data={Pasacao.features as any}
+          style={roadStyle}
+          onEachFeature={onEachRoad}
+        />
+        <GeoJSON
+          data={Maharlika.features as any}
+          style={roadStyle}
+          onEachFeature={onEachRoad}
+        />
+        <GeoJSON
           data={Street.features as any}
           style={roadStyle}
           onEachFeature={onEachRoad}
@@ -402,6 +414,8 @@ const onEachZone = (zone, layer) => {
             Zone 7
           </div>
         </div>
+      <h1 className="mt-2 text-end">Tambo Land Area
+        : <span className="font-bold">294.754 Hectares</span></h1>
       {deleteTarget && (
         <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
           <DialogContent className="bg-white text-black">

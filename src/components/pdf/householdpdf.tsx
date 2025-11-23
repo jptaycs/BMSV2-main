@@ -1,6 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { styles } from "./Stylesheet";
-import { format } from "date-fns";
 import PDFHeader from "./pdfheader";
 import { Household } from "@/types/apitypes";
 
@@ -36,13 +35,11 @@ export const HouseholdPDF = ({ filter, households }: Props) => {
               </View>
 
               <View style={styles.tableRow}>
-                <View style={styles.headerCell}><Text>ID</Text></View>
                 <View style={styles.headerCell}><Text>House #</Text></View>
                 <View style={styles.headerCell}><Text>Type</Text></View>
                 <View style={styles.headerCell}><Text>Members</Text></View>
-                <View style={styles.headerCell}><Text>Head</Text></View>
+                <View style={[styles.headerCell, { width: 120 }]}><Text>Head</Text></View>
                 <View style={styles.headerCell}><Text>Zone</Text></View>
-                <View style={styles.headerCell}><Text>Date</Text></View>
                 <View style={styles.headerCell}><Text>Status</Text></View>
               </View>
 
@@ -56,9 +53,6 @@ export const HouseholdPDF = ({ filter, households }: Props) => {
                     key={household.id}
                   >
                     <View style={styles.tableCell}>
-                      <Text>{household.id}</Text>
-                    </View>
-                    <View style={styles.tableCell}>
                       <Text>{household.household_number}</Text>
                     </View>
                     <View style={styles.tableCell}>
@@ -67,14 +61,11 @@ export const HouseholdPDF = ({ filter, households }: Props) => {
                     <View style={styles.tableCell}>
                       <Text>{Array.isArray(household.member) ? household.member.length : household.member}</Text>
                     </View>
-                    <View style={styles.tableCell}>
+                    <View style={[styles.tableCell, { width: 120 }]}>
                       <Text>{household.head}</Text>
                     </View>
                     <View style={styles.tableCell}>
                       <Text>{household.zone}</Text>
-                    </View>
-                    <View style={styles.tableCell}>
-                      <Text>{format(household.date, "MMMM do, yyyy")}</Text>
                     </View>
                     <View style={styles.tableCell}>
                       <Text>{household.status}</Text>

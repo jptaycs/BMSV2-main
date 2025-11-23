@@ -12,10 +12,16 @@ type Props = {
 };
 
 export const YouthPDF = ({ filter, youths }: Props) => {
-  // Split youths array into pages with ROWS_PER_PAGE rows each
+  // Sort alphabetically: Lastname, Firstname, Middlename, Suffix
+  const sortedYouths = [...youths].sort((a, b) => {
+    const nameA = `${a.Lastname || ""} ${a.Firstname || ""} ${a.Middlename || ""} ${a.Suffix || ""}`.toLowerCase();
+    const nameB = `${b.Lastname || ""} ${b.Firstname || ""} ${b.Middlename || ""} ${b.Suffix || ""}`.toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
   const pages = [];
-  for (let i = 0; i < youths.length; i += ROWS_PER_PAGE) {
-    pages.push(youths.slice(i, i + ROWS_PER_PAGE));
+  for (let i = 0; i < sortedYouths.length; i += ROWS_PER_PAGE) {
+    pages.push(sortedYouths.slice(i, i + ROWS_PER_PAGE));
   }
 
   return (
@@ -23,7 +29,7 @@ export const YouthPDF = ({ filter, youths }: Props) => {
       {pages.map((pageYouths, pageIndex) => (
         <Page
           key={pageIndex}
-          orientation="portrait"
+          orientation="landscape"
           size="A4"
           wrap={false}
           style={{ paddingTop: 10, paddingBottom: 10, paddingHorizontal: 10 }}
@@ -66,7 +72,7 @@ export const YouthPDF = ({ filter, youths }: Props) => {
                       <View style={styles.tableCell}><Text>{youth.ID}</Text></View>
                       <View style={styles.tableCell}>
                         <Text>
-                          {youth.Firstname} {youth.Middlename ?? ""} {youth.Lastname} {youth.Suffix ?? ""}
+                          {youth.Lastname}, {youth.Firstname} {youth.Middlename ?? ""} {youth.Suffix ?? ""}
                         </Text>
                       </View>
                       <View style={styles.tableCell}><Text>{youth.Gender}</Text></View>
