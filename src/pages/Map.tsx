@@ -1,4 +1,4 @@
-import Maharlika from "@/assets/geojson/Maharlika.json";
+import Rail from "@/assets/geojson/Rail.json";
 import Street from "@/assets/geojson/Street.json";
 import Border from "@/assets/geojson/Border.json";
 import Building from "@/assets/geojson/Building.json";
@@ -93,6 +93,15 @@ export default function Map() {
     interactive: true,
   };
 
+  const railStyle: L.PathOptions = {
+    color: "#8B0000",       // Dark red for rail
+    weight: 4,
+    dashArray: "8, 6",      // Dashed line to mimic rails
+    fillColor: "#8B0000",
+    fillOpacity: 0.5,
+    interactive: true,
+  };
+
   const borderStyle: L.PathOptions = {
     fillColor: "#FAF7F3",
     weight: 1,
@@ -114,6 +123,27 @@ export default function Map() {
     fillColor: "green",
     fillOpacity: 0.1,
     interactive: true,
+  };
+
+  const onEachRail = (rail, layer) => {
+    const displayName = "Poblacion Rail";
+
+    layer.bindTooltip(displayName, { permanent: false, direction: "top", sticky: true });
+
+    layer.on("mouseover", () => {
+      layer.openTooltip();
+      layer.setStyle({
+        color: "#B22222", // lighter red on hover
+        weight: 5,
+        dashArray: "8, 6",
+        fillOpacity: 0.6,
+      });
+    });
+
+    layer.on("mouseout", () => {
+      layer.closeTooltip();
+      layer.setStyle(railStyle);
+    });
   };
 
   const onEachRoad = (road, layer) => {
@@ -321,9 +351,9 @@ const onEachZone = (zone, layer) => {
         <GeoJSON data={Border.features as any} style={borderStyle} />
         <GeoJSON data={Zone.features as any} onEachFeature={onEachZone}/>
         <GeoJSON
-          data={Maharlika.features as any}
-          style={roadStyle}
-          onEachFeature={onEachRoad}
+          data={Rail.features as any}
+          style={railStyle}
+          onEachFeature={onEachRail}
         />
         <GeoJSON
           data={Street.features as any}
