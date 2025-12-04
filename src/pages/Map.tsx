@@ -1,5 +1,4 @@
 import Maharlika from "@/assets/geojson/Maharlika.json";
-import Pasacao from "@/assets/geojson/Pasacao.json";
 import Street from "@/assets/geojson/Street.json";
 import Border from "@/assets/geojson/Border.json";
 import Building from "@/assets/geojson/Building.json";
@@ -30,7 +29,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import Filter from "@/components/ui/filter";
 
-const center: LatLngExpression = [13.579126, 123.063078];
+const center: LatLngExpression = [13.5899926, 123.081108];
 
 export default function Map() {
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
@@ -255,13 +254,16 @@ export default function Map() {
 const onEachZone = (zone, layer) => {
   const id = zone.properties?.id || "Unknown";
   switch(id){
-    case 1: layer.setStyle({color: "red", fillColor: "red", fillOpacity: 0.1}); break;
-    case 2: layer.setStyle({color: "blue", fillColor: "blue", fillOpacity: 0.1}); break;
-    case 3: layer.setStyle({color: "green", fillColor: "green", fillOpacity: 0.1}); break;
-    case 4: layer.setStyle({color: "purple", fillColor: "purple", fillOpacity: 0.1}); break;
-    case 5: layer.setStyle({color: "orange", fillColor: "orange", fillOpacity: 0.1}); break;
-    case 6: layer.setStyle({color: "brown", fillColor: "brown", fillOpacity: 0.1}); break;
-    case 7: layer.setStyle({color: "pink", fillColor: "pink", fillOpacity: 0.1}); break;
+    case 1: layer.setStyle({color: "#9ACD32", fillColor: "#9ACD32", fillOpacity: 0.1}); break;
+    case 2: layer.setStyle({color: "purple", fillColor: "purple", fillOpacity: 0.1}); break;
+    case 3: layer.setStyle({color: "blue", fillColor: "blue", fillOpacity: 0.1}); break;
+    case 4: layer.setStyle({color: "green", fillColor: "green", fillOpacity: 0.1}); break;
+    case 5: layer.setStyle({color: "brown", fillColor: "brown", fillOpacity: 0.1}); break;
+    case 6: layer.setStyle({color: "yellow", fillColor: "yellow", fillOpacity: 0.1}); break;
+    case 7: layer.setStyle({color: "red", fillColor: "red", fillOpacity: 0.1}); break;
+    case 8: layer.setStyle({color: "cyan", fillColor: "cyan", fillOpacity: 0.1}); break;
+    case 9: layer.setStyle({color: "pink", fillColor: "pink", fillOpacity: 0.1}); break;
+    case 10: layer.setStyle({color: "orange", fillColor: "orange", fillOpacity: 0.1}); break;
     default: layer.setStyle({color: "gray", fillColor: "gray", fillOpacity: 0.1}); break;
   }
   layer.bindTooltip(`Zone ${id}`, { permanent: false, direction: "top", sticky: true });
@@ -317,11 +319,6 @@ const onEachZone = (zone, layer) => {
       >
         <GeoJSON data={Border.features as any} style={borderStyle} />
         <GeoJSON data={Zone.features as any} onEachFeature={onEachZone}/>
-        <GeoJSON
-          data={Pasacao.features as any}
-          style={roadStyle}
-          onEachFeature={onEachRoad}
-        />
         <GeoJSON
           data={Maharlika.features as any}
           style={roadStyle}
@@ -386,32 +383,44 @@ const onEachZone = (zone, layer) => {
           {/* Zones Legend */}
           <h2 className="font-bold mt-4 mb-2">Zones</h2>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'red', borderColor: 'red' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: '#9ACD32', borderColor: '#9ACD32' }}></div>
             Zone 1
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'blue', borderColor: 'blue' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'purple', borderColor: 'purple' }}></div>
             Zone 2
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'green', borderColor: 'green' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'blue', borderColor: 'blue' }}></div>
             Zone 3
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'purple', borderColor: 'purple' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'green', borderColor: 'green' }}></div>
             Zone 4
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'orange', borderColor: 'orange' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'brown', borderColor: 'brown' }}></div>
             Zone 5
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'brown', borderColor: 'brown' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'yellow', borderColor: 'yellow' }}></div>
             Zone 6
           </div>
           <div className="flex items-center">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'pink', borderColor: 'pink' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'red', borderColor: 'red' }}></div>
             Zone 7
+          </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'cyan', borderColor: 'cyan' }}></div>
+            Zone 8
+          </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'pink', borderColor: 'pink' }}></div>
+            Zone 9
+          </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'orange', borderColor: 'orange' }}></div>
+            Zone 10
           </div>
         </div>
       <h1 className="mt-2 text-end">Tambo Land Area
