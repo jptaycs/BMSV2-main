@@ -117,9 +117,10 @@ export default function Map() {
   };
 
   const onEachRoad = (road, layer) => {
-    const roadName = road.properties.name;
+    const displayName = road.properties?.name || road.properties?.mapping_name || "Poblacion Street";
 
-    layer.bindTooltip(roadName, { permanent: false, direction: "top", sticky: true });
+    layer.bindTooltip(displayName, { permanent: false, direction: "top", sticky: true });
+
     layer.on("mouseover", () => {
       layer.openTooltip();
       layer.setStyle({
@@ -142,8 +143,9 @@ export default function Map() {
   const queryClient = useQueryClient()
   const [deleteTarget, setDeleteTarget] = useState<{ id: number, name: string } | null>(null);
   const onEachInfra = (infra, layer) => {
-    const display = infra.properties?.mapping_name;
-    let popupContent = String(display ?? "Not Assigned yet.");
+    const display = infra.properties?.mapping_name || "Not Assigned yet.";
+    let popupContent = String(display);
+
     if (popupContent.includes(",")) {
       const parts = popupContent.split(",").map(p => p.trim());
       if (parts.length > 1) {
@@ -152,6 +154,7 @@ export default function Map() {
         popupContent = `${commercial}<br/>${household}`;
       }
     }
+
     layer.bindTooltip(popupContent, { permanent: false, direction: "top", sticky: true });
 
     layer.on("mouseover", () => {
@@ -160,7 +163,7 @@ export default function Map() {
         infra.properties?.type?.toLowerCase().includes("commercial") &&
         /Household #\s*\d+/.test(display)
       ) {
-        layer.setStyle({ color: "blue", fillColor: "#66cc66" }); // commercial + household hover with light green fill
+        layer.setStyle({ color: "blue", fillColor: "green" }); // commercial + household hover with light green fill
       } else if (infra.properties?.type?.toLowerCase().includes("commercial")) {
         layer.setStyle({ color: "#6699ff", fillColor: "#6699ff" }); // lighter blue
       } else if (infra.properties?.type?.toLowerCase().includes("institutional")) {
@@ -193,14 +196,12 @@ export default function Map() {
           fillColor: "purple",
         });
       } else {
-        layer.setStyle(
-          /Household #\s*\d+/.test(display) ? updatedStyle : infraStyle
-        );
+        layer.setStyle(/Household #\s*\d+/.test(display) ? updatedStyle : infraStyle);
       }
     });
 
     layer.on("click", async () => {
-      const feature = building?.features.find((b) => b.properties?.id === infra?.properties?.id)
+      const feature = building?.features.find((b) => b.properties?.id === infra?.properties?.id);
       if (feature?.properties?.mapping_name !== undefined) {
         setDeleteTarget({
           id: feature.properties?.id,
@@ -221,8 +222,8 @@ export default function Map() {
                 Lastname: r.lastname,
                 Role: r.role,
                 Income: r.income
-              }))
-              const head = member?.find(r => r.Role.toLowerCase() === "head")
+              }));
+              const head = member?.find(r => r.Role.toLowerCase() === "head");
               return {
                 id: data?.household.id,
                 household_number: data?.household?.household_number,
@@ -232,8 +233,8 @@ export default function Map() {
                 zone: data?.household?.zone,
                 date: new Date(data?.household?.date_of_residency),
                 status: data?.household?.status,
-              }
-            }
+              };
+            };
             setViewHousehold(parsedData);
           } else {
             setSelectedFeature(infra);
@@ -423,8 +424,6 @@ const onEachZone = (zone, layer) => {
             Zone 10
           </div>
         </div>
-      <h1 className="mt-2 text-end">Tambo Land Area
-        : <span className="font-bold">294.754 Hectares</span></h1>
       {deleteTarget && (
         <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
           <DialogContent className="bg-white text-black">
