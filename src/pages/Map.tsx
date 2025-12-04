@@ -1,5 +1,6 @@
-import Maharlika from "@/assets/geojson/Maharlika.json";
+import Rail from "@/assets/geojson/Rail.json";
 import Street from "@/assets/geojson/Street.json";
+import Road from "@/assets/geojson/Road.json";
 import Border from "@/assets/geojson/Border.json";
 import Building from "@/assets/geojson/Building.json";
 import Zone from "@/assets/geojson/Zone.json";
@@ -93,6 +94,14 @@ export default function Map() {
     interactive: true,
   };
 
+  const railStyle: L.PathOptions = {
+    color: "#000000",
+    weight: 4,
+    dashArray: "6,6",
+    fillOpacity: 0,
+    interactive: true,
+  };
+
   const borderStyle: L.PathOptions = {
     fillColor: "#FAF7F3",
     weight: 1,
@@ -138,6 +147,26 @@ export default function Map() {
         fillColor: "#333446",
         fillOpacity: 0.3,
       });
+    });
+  };
+
+  const onEachRail = (rail, layer) => {
+    const displayName = rail.properties?.name || "Poblacion Rail";
+
+    layer.bindTooltip(displayName, { permanent: false, direction: "top", sticky: true });
+
+    layer.on("mouseover", () => {
+      layer.openTooltip();
+      layer.setStyle({
+        color: "#555",
+        weight: 5,
+        dashArray: "6,4",
+      });
+    });
+
+    layer.on("mouseout", () => {
+      layer.closeTooltip();
+      layer.setStyle(railStyle);
     });
   };
   const queryClient = useQueryClient()
@@ -321,12 +350,17 @@ const onEachZone = (zone, layer) => {
         <GeoJSON data={Border.features as any} style={borderStyle} />
         <GeoJSON data={Zone.features as any} onEachFeature={onEachZone}/>
         <GeoJSON
-          data={Maharlika.features as any}
+          data={Rail.features as any}
+          style={railStyle}
+          onEachFeature={onEachRail}
+        />
+        <GeoJSON
+          data={Street.features as any}
           style={roadStyle}
           onEachFeature={onEachRoad}
         />
         <GeoJSON
-          data={Street.features as any}
+          data={Road.features as any}
           style={roadStyle}
           onEachFeature={onEachRoad}
         />
