@@ -72,7 +72,7 @@ export default function BusinessPermit() {
   const [businessType, setBusinessType] = useState("");
   const [businessLocation, setBusinessLocation] = useState("");
   const [businessOwner, setBusinessOwner] = useState("");
-  const [assignedOfficial, setAssignedOfficial] = useState("");
+  // const [assignedOfficial, setAssignedOfficial] = useState("");
   const [age, setAge] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -91,6 +91,15 @@ export default function BusinessPermit() {
   } | null>(null);
   const [, setLogoDataUrl] = useState<string | null>(null);
   const [, setLogoMunicipalityDataUrl] = useState<string | null>(null);
+
+  // O.R. Number, Amount, and Documentary Stamp Date
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100"); // default 100 PHP
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   const allResidents = useMemo(() => {
     return residents.map((res) => ({
@@ -356,7 +365,7 @@ export default function BusinessPermit() {
                 />
               )}
             </div>
-            <div className="mt-1">
+            {/* <div className="mt-1">
               <label
                 htmlFor="assignedOfficial"
                 className="block text-sm font-medium text-gray-700 mb-0.5"
@@ -386,7 +395,7 @@ export default function BusinessPermit() {
                     ))}
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
           </div>
           <div className="mt-1">
             <label htmlFor="preparedBy" className="block text-sm font-medium text-gray-700 mb-0.5">
@@ -401,6 +410,32 @@ export default function BusinessPermit() {
               placeholder="Enter preparer's name"
             />
           </div>
+          <div className="mt-4">
+            <label htmlFor="orNumber" className="block text-sm font-medium text-gray-700 mb-0.5">
+              O.R. Number
+            </label>
+            <input
+              id="orNumber"
+              type="text"
+              value={orNumber}
+              onChange={(e) => setOrNumber(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              placeholder="Enter O.R. Number"
+            />
+          </div>
+          <div className="mt-4">
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Amount (PHP)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              min={0}
+            />
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between items-center gap-2">
           <Button
@@ -410,6 +445,20 @@ export default function BusinessPermit() {
                 return;
               }
               try {
+                const issuedDate = new Date();
+                const formattedIssuedDate =
+                  issuedDate.getFullYear() +
+                  "-" +
+                  String(issuedDate.getMonth() + 1).padStart(2, "0") +
+                  "-" +
+                  String(issuedDate.getDate()).padStart(2, "0") +
+                  " " +
+                  String(issuedDate.getHours()).padStart(2, "0") +
+                  ":" +
+                  String(issuedDate.getMinutes()).padStart(2, "0") +
+                  ":" +
+                  String(issuedDate.getSeconds()).padStart(2, "0");
+
                 const cert: any = {
                   resident_id: selectedResident.ID,
                   resident_name: `${selectedResident.Firstname} ${
@@ -418,11 +467,13 @@ export default function BusinessPermit() {
                       : ""
                   }${selectedResident.Lastname}`,
                   type_: "Barangay Business Permit",
-                  issued_date: new Date().toISOString(),
+                  issued_date: formattedIssuedDate,
                   ownership_text: businessOwner || "",
                   civil_status: civilStatus || "",
                   purpose: purpose === "custom" ? customPurpose || "" : purpose,
                   age: age ? parseInt(age) : undefined,
+                  or_number: orNumber,
+                  amount: amount ? parseFloat(amount) : 0,
                 };
                 await addCertificate(cert);
                 toast.success("Certificate saved successfully!", {
@@ -453,7 +504,7 @@ export default function BusinessPermit() {
                     textAlign: "center",
                     fontWeight: "bold",
                     fontSize: 24,
-                    marginBottom: 10,
+                    marginBottom: 50,
                     fontFamily: "Times-Roman",
                   }}
                 >
@@ -521,7 +572,7 @@ export default function BusinessPermit() {
                     { textAlign: "justify", marginBottom: 8 },
                   ]}
                 >
-                  And which said person had accomplish{" "}
+                  {"         "}  And which said person had accomplish{" "}
                   <Text style={{ fontWeight: "bold" }}>
                     Barangay Ordinance No.14
                   </Text>
@@ -535,7 +586,7 @@ export default function BusinessPermit() {
                     { textAlign: "justify", marginBottom: 8 },
                   ]}
                 >
-                  This Barangay permit on business indorsed to this Municipality
+                  {"         "}  This Barangay permit on business indorsed to this Municipality
                   for registration purposes only.
                 </Text>
                 <Text
@@ -565,8 +616,11 @@ export default function BusinessPermit() {
                 <CertificateFooter
                   styles={styles}
                   captainName={captainName ?? ""}
-                  assignedOfficial={assignedOfficial}
+                  // assignedOfficial={assignedOfficial}
                   preparedBy={preparedBy}
+                  orNumber={orNumber}
+                  amount={amount}
+                  documentaryStampDate={documentaryStampDate}
                 />
               </View>
             </Page>

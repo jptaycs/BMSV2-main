@@ -96,13 +96,12 @@ export default function YouthPage() {
     return sorted ?? [];
   }, [searchParams, searchQuery, youthData]);
 
-  const res = youthData?.youths || [];
-  const total = res.length;
-  const inSchool = res.filter((r) => r.InSchoolYouth).length;
-  const outOfSchool = res.filter((r) => r.OutOfSchoolYouth).length;
-  const working = res.filter((r) => r.WorkingYouth).length;
-  const withNeeds = res.filter((r) => r.YouthWithSpecificNeeds).length;
-  const skVoters = res.filter((r) => r.IsSKVoter).length;
+  const total = filteredData.length;
+  const inSchool = filteredData.filter((r) => r.InSchoolYouth).length;
+  const outOfSchool = filteredData.filter((r) => r.OutOfSchoolYouth).length;
+  const working = filteredData.filter((r) => r.WorkingYouth).length;
+  const withNeeds = filteredData.filter((r) => r.YouthWithSpecificNeeds).length;
+  const skVoters = filteredData.filter((r) => r.IsSKVoter).length;
 
   const startDownload = async (filename: string, filter: string, filteredYouths: Youth[]) => {
     setIsDownloading(true);
@@ -153,7 +152,7 @@ export default function YouthPage() {
           title="Total Youth"
           value={total}
           icon={<Users size={50} />}
-          onClick={() => prepareDownload("YouthRecords.pdf", "All Youth", res)}
+          onClick={() => prepareDownload("YouthRecords.pdf", "All Youth", filteredData)}
         />
         <SummaryCardYouth
           title="In School"
@@ -163,7 +162,7 @@ export default function YouthPage() {
             prepareDownload(
               "InSchoolYouth.pdf",
               "In School Youth",
-              res.filter((r) => r.InSchoolYouth)
+              filteredData.filter((r) => r.InSchoolYouth)
             )
           }
         />
@@ -175,7 +174,7 @@ export default function YouthPage() {
             prepareDownload(
               "OutOfSchoolYouth.pdf",
               "Out of School Youth",
-              res.filter((r) => r.OutOfSchoolYouth)
+              filteredData.filter((r) => r.OutOfSchoolYouth)
             )
           }
         />
@@ -187,7 +186,7 @@ export default function YouthPage() {
             prepareDownload(
               "WorkingYouth.pdf",
               "Working Youth",
-              res.filter((r) => r.WorkingYouth)
+              filteredData.filter((r) => r.WorkingYouth)
             )
           }
         />
@@ -199,7 +198,7 @@ export default function YouthPage() {
             prepareDownload(
               "YouthWithSpecificNeeds.pdf",
               "Youth with Specific Needs",
-              res.filter((r) => r.YouthWithSpecificNeeds)
+              filteredData.filter((r) => r.YouthWithSpecificNeeds)
             )
           }
         />
@@ -211,7 +210,7 @@ export default function YouthPage() {
             prepareDownload(
               "SKVoters.pdf",
               "SK Voters",
-              res.filter((r) => r.IsSKVoter)
+              filteredData.filter((r) => r.IsSKVoter)
             )
           }
         />

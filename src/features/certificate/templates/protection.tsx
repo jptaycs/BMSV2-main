@@ -479,7 +479,7 @@ export default function BarangayProtectionOrder() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -498,7 +498,7 @@ export default function BarangayProtectionOrder() {
                       </Text>
                       <Text style={[styles.bodyText, { textAlign: "justify", marginBottom: 10 }]}>
                         <Text>
-                          {complainantName ? (
+                          {"         "}{complainantName ? (
                             <Text style={{ fontWeight: "bold" }}>{complainantName} </Text>
                           ) : (
                             <Text style={{ fontWeight: "bold" }}>________________ </Text>
@@ -525,14 +525,14 @@ export default function BarangayProtectionOrder() {
                         </Text>
                       </Text>
                       <Text style={[styles.bodyText, { textAlign: "justify", marginBottom: 10 }]}>
-                        {orderText
+                        {"         "}{orderText
                           ? orderText
-                          : "After due hearing and in accordance with Section 409 of the Local Government Code of 1991 (RA 7160), the undersigned finds merit in the application and hereby issues this BARANGAY PROTECTION ORDER (BPO) ordering the respondent to CEASE AND DESIST from committing or threatening to commit further acts of violence or harassment against the complainant and/or any member of the household."}
+                          : "        After due hearing and in accordance with Section 409 of the Local Government Code of 1991 (RA 7160), the undersigned finds merit in the application and hereby issues this BARANGAY PROTECTION ORDER (BPO) ordering the respondent to CEASE AND DESIST from committing or threatening to commit further acts of violence or harassment against the complainant and/or any member of the household."}
                       </Text>
                       <Text style={[styles.bodyText, { textAlign: "justify", marginBottom: 10 }]}>
-                        {solutionText
+                        {"         "}{solutionText
                           ? solutionText
-                          : `The respondent is prohibited from approaching or causing any person to approach the complainant at a distance of not less than 100 meters at any place at any time. This order is effective for fifteen (15) days from the date of issuance.`}
+                          : `     The respondent is prohibited from approaching or causing any person to approach the complainant at a distance of not less than 100 meters at any place at any time. This order is effective for fifteen (15) days from the date of issuance.`}
                       </Text>
                       <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
                         VIOLATION OF THIS ORDER IS PUNISHABLE BY LAW.

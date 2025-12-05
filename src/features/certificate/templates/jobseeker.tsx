@@ -74,6 +74,13 @@ export default function Jobseeker() {
     Municipality: string;
     Province: string;
   } | null>(null);
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100");
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const civilStatusOptions = [
     "Single",
     "Lived-in",
@@ -406,6 +413,38 @@ export default function Jobseeker() {
                 placeholder="Enter preparer's name"
               />
             </div>
+            <div className="mt-4">
+              <label
+                htmlFor="orNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                O.R. Number
+              </label>
+              <input
+                id="orNumber"
+                type="text"
+                value={orNumber}
+                onChange={(e) => setOrNumber(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter O.R. Number"
+              />
+            </div>
+            <div className="mt-4">
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Amount (PHP)
+              </label>
+              <input
+                id="amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                min={0}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center gap-4">
             <Button
@@ -415,6 +454,13 @@ export default function Jobseeker() {
                   return;
                 }
                 try {
+                  const formatDate = (date: Date) => {
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+                    const day = date.getDate().toString().padStart(2, "0");
+                    return `${year}-${month}-${day}`;
+                  };
+
                   const cert: any = {
                     resident_id: selectedResident.ID,
                     resident_name: `${selectedResident.Firstname} ${
@@ -423,12 +469,14 @@ export default function Jobseeker() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Jobseeker Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: formatDate(new Date()),
                     ownership_text: "",
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: parseFloat(amount) || 0,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -458,7 +506,7 @@ export default function Jobseeker() {
                     textAlign: "center",
                     fontWeight: "bold",
                     fontSize: 24,
-                    marginBottom: 10,
+                    marginBottom: 50,
                     fontFamily: "Times-Roman",
                   }}
                 >
@@ -481,8 +529,8 @@ export default function Jobseeker() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{ }}>
+                         {"         "} This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -508,7 +556,7 @@ export default function Jobseeker() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certifies further that the above-named person is a
+                        {"         "}This certifies further that the above-named person is a
                         qualified availed of{" "}
                         <Text style={{ fontWeight: "bold" }}>
                           RA11261 of the First Time Jobseeker Act of 2019.
@@ -531,7 +579,7 @@ export default function Jobseeker() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certification is issued upon request of the
+                        {"         "}This certification is issued upon request of the
                         interested party for whatever legal purpose it may
                         serve.
                       </Text>
@@ -576,6 +624,9 @@ export default function Jobseeker() {
                     captainName={captainName}
                     assignedOfficial={assignedOfficial}
                     preparedBy={preparedBy}
+                    orNumber={orNumber}
+                    amount={amount}
+                    documentaryStampDate={documentaryStampDate}
                   />
                 </View>
               </Page>

@@ -59,6 +59,14 @@ export default function Clearance() {
   // Purpose state
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
+  // O.R. Number and Amount state
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100");
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const purposeOptions = [
     "Employment",
     "Bank Requirement",
@@ -426,6 +434,38 @@ export default function Clearance() {
                 placeholder="Enter name"
               />
             </div>
+          <div className="mt-4">
+            <label
+              htmlFor="orNumber"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              O.R. Number
+            </label>
+            <input
+              id="orNumber"
+              type="text"
+              value={orNumber}
+              onChange={(e) => setOrNumber(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              placeholder="Enter O.R. Number"
+            />
+          </div>
+          <div className="mt-4">
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Amount (PHP)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              min={0}
+            />
+          </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center gap-4">
             <Button
@@ -443,12 +483,16 @@ export default function Clearance() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Barangay Clearance",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date()
+                      .toLocaleString("en-CA", { hour12: false })
+                      .replace("T", " "),
                     ownership_text: "",
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: parseFloat(amount) || 0,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -479,7 +523,7 @@ export default function Clearance() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -501,7 +545,7 @@ export default function Clearance() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This is to certify that{" "}
+                       {"         "}This is to certify that{" "}
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
                             selectedResident.Middlename
@@ -522,25 +566,13 @@ export default function Clearance() {
                         present has no any criminal records and/or any case in
                         this Barangay.
                       </Text>
-                      {/* Purpose line */}
                       <Text
                         style={[
                           styles.bodyText,
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        Purpose of Certificate:{" "}
-                        {purpose === "custom"
-                          ? customPurpose || "________________"
-                          : purpose || "________________"}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.bodyText,
-                          { textAlign: "justify", marginBottom: 8 },
-                        ]}
-                      >
-                        This certification is being issued upon request of the
+                       {"         "}This certification is being issued upon request of the
                         above named-person for record, reference and other legal
                         matters this may serve.
                       </Text>
@@ -560,6 +592,18 @@ export default function Clearance() {
                         ,{settings ? settings.municipality : "________________"}
                         ,{settings ? settings.province : "________________"}
                       </Text>
+                      {/* Purpose line */}
+                      <Text
+                        style={[
+                          styles.bodyText,
+                          { textAlign: "justify", marginBottom: 8 },
+                        ]}
+                      >
+                        Purpose of Certificate:{" "}
+                        {purpose === "custom"
+                          ? customPurpose || "________________"
+                          : purpose || "________________"}
+                      </Text>
                     </>
                   ) : (
                     <Text style={styles.bodyText}>
@@ -572,6 +616,9 @@ export default function Clearance() {
                     captainName={captainName}
                     assignedOfficial={assignedOfficial}
                     preparedBy={preparedBy}
+                    orNumber={orNumber}
+                    amount={amount}
+                    documentaryStampDate={documentaryStampDate}
                   />
                 </View>
               </Page>

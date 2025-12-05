@@ -68,8 +68,17 @@ export default function Indigency() {
   const [customBody, setCustomBody] = useState(
     "This certification is being issued upon the request of the above-named person for the purpose of applying for an entrance examination for her daughter"
   );
+  // O.R. Number and Amount state variables
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100");
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [residentOpen, setResidentOpen] = useState(false);
+  const [dependentOpen, setDependentOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   const [age, setAge] = useState("");
@@ -203,12 +212,12 @@ export default function Indigency() {
           </CardHeader>
           <CardContent>
             <div>
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={residentOpen} onOpenChange={setResidentOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
-                    aria-expanded={open}
+                    aria-expanded={residentOpen}
                     className="w-full flex justify-between"
                   >
                     {value
@@ -267,7 +276,7 @@ export default function Indigency() {
                                     }
                                     setCivilStatus(selected.CivilStatus || "");
                                   }
-                                  setOpen(false);
+                                  setResidentOpen(false);
                                 }}
                               >
                                 {res.label}
@@ -291,18 +300,63 @@ export default function Indigency() {
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Select Dependent</label>
-              <Select value={selectedDependent} onValueChange={setSelectedDependent}>
-                <SelectTrigger className="w-full border rounded px-3 py-2 text-sm">
-                  <SelectValue placeholder="-- Select Dependent --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allResidents.map((res) => (
-                    <SelectItem key={res.value} value={res.label}>
-                      {res.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={dependentOpen} onOpenChange={setDependentOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={dependentOpen}
+                    className="w-full flex justify-between"
+                  >
+                    {selectedDependent ? selectedDependent : "Select Dependent"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="p-0 w-full">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search Dependent..."
+                      className="h-9"
+                      value={search}
+                      onValueChange={setSearch}
+                    />
+
+                    {filteredResidents.length === 0 ? (
+                      <CommandEmpty>No dependents found.</CommandEmpty>
+                    ) : (
+                      <div className="h-60 overflow-hidden">
+                        <Virtuoso
+                          style={{ height: "100%" }}
+                          totalCount={filteredResidents.length}
+                          itemContent={(index) => {
+                            const res = filteredResidents[index];
+                            return (
+                              <CommandItem
+                                key={res.value}
+                                value={res.label}
+                                className="text-black"
+                                onSelect={() => {
+                                  setSelectedDependent(res.label);
+                                  setDependentOpen(false);
+                                }}
+                              >
+                                {res.label}
+                                <Check
+                                  className={cn(
+                                    "ml-auto",
+                                    selectedDependent === res.label ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Custom Paragraph</label>
@@ -442,7 +496,40 @@ export default function Indigency() {
                 placeholder="Enter preparer's name"
               />
             </div>
-          </CardContent>
+          {/* O.R. Number and Amount Inputs */}
+          <div className="mt-4">
+            <label
+              htmlFor="orNumber"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              O.R. Number
+            </label>
+            <input
+              id="orNumber"
+              type="text"
+              value={orNumber}
+              onChange={(e) => setOrNumber(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              placeholder="Enter O.R. Number"
+            />
+          </div>
+          <div className="mt-4">
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Amount (PHP)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              min={0}
+            />
+          </div>
+        </CardContent>
           <CardFooter className="flex justify-between items-center gap-4">
             <Button
               onClick={async () => {
@@ -459,12 +546,13 @@ export default function Indigency() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Indigency Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().split("T")[0], // format as yyyy-mm-dd
                     ownership_text: "",
                     civil_status: civilStatus || "",
-                    purpose:
-                      purpose === "custom" ? customPurpose || "" : purpose,
+                    purpose: purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: parseFloat(amount),
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -494,7 +582,7 @@ export default function Indigency() {
                     textAlign: "center",
                     fontWeight: "bold",
                     fontSize: 24,
-                    marginBottom: 10,
+                    marginBottom: 50,
                     fontFamily: "Times-Roman",
                   }}
                 >
@@ -514,11 +602,11 @@ export default function Indigency() {
                       <Text
                         style={[
                           styles.bodyText,
-                          { textAlign: "justify", marginBottom: 8 },
+                          { textAlign: "justify", marginBottom: 8, textIndent: 20 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{ }}>
+                          {"          "} This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -544,7 +632,7 @@ export default function Indigency() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certifies further that the above-named person
+                        {"         "} This certifies further that the above-named person
                         belongs to the{" "}
                         <Text style={{ fontWeight: "bold" }}>Indigency</Text>{" "}
                         sector in this Barangay and is duly recognized as such
@@ -561,9 +649,11 @@ export default function Indigency() {
                           const defaultText =
                             "This certification is being issued upon the request of the above-named person for the purpose of applying for an entrance examination for her daughter.";
 
+                          const indent = "          "; // 10 spaces for indentation
+
                           // Helper: Render text with bold dependent inserted
                           const renderWithDependent = (text: string) => {
-                            if (!selectedDependent) return text;
+                            if (!selectedDependent) return indent + text;
                             const parts = text.split(new RegExp(`(${selectedDependent})`, "gi"));
                             if (parts.length > 1) {
                               return parts.map((part, i) =>
@@ -572,14 +662,14 @@ export default function Indigency() {
                                     {part}
                                   </Text>
                                 ) : (
-                                  <Text key={i}>{part}</Text>
+                                  <Text key={i}>{i === 0 ? indent + part : part}</Text>
                                 )
                               );
                             }
                             // If dependent not in text, append at the end with a period.
                             return (
                               <>
-                                {text}{" "}
+                                {indent + text}{" "}
                                 <Text style={{ fontWeight: "bold" }}>{selectedDependent}</Text>.
                               </>
                             );
@@ -613,8 +703,7 @@ export default function Indigency() {
                             );
                             return (
                               <>
-                                {textWithoutDependent}{" "}
-                                <Text style={{ fontWeight: "bold" }}>{selectedDependent}</Text>
+                                {indent + textWithoutDependent} <Text style={{ fontWeight: "bold" }}>{selectedDependent}</Text>
                               </>
                             );
                           }
@@ -623,10 +712,11 @@ export default function Indigency() {
                           if (customBody.trim() === defaultText) {
                             return (
                               <>
-                                This certification is being issued upon the request of the above-named person for the purpose of applying for an entrance examination for her daughter{" "}
+                                {indent}This certification is being issued upon the request of the above-named person for the purpose of applying for an entrance examination for her daughter{" "}
                                 <Text style={{ fontWeight: "bold" }}>
                                   {selectedDependent || ""}
-                                </Text>.
+                                </Text>
+                                .
                               </>
                             );
                           }
@@ -677,6 +767,9 @@ export default function Indigency() {
                     captainName={captainName}
                     assignedOfficial={assignedOfficial}
                     preparedBy={preparedBy}
+                    orNumber={orNumber}
+                    amount={amount}
+                    documentaryStampDate={documentaryStampDate}
                   />
                 </View>
               </Page>

@@ -323,7 +323,7 @@ export default function Completion() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -372,7 +372,7 @@ export default function Completion() {
                         },
                       ]}
                     >
-                      This is to certify that the above-menttioned project is
+                     {"         "}This is to certify that the above-menttioned project is
                       100% completed as of{" "}
                       {completionDate
                         ? new Date(completionDate).toLocaleDateString()
@@ -399,7 +399,7 @@ export default function Completion() {
                         },
                       ]}
                     >
-                      This is to certify further that the above-mentioned
+                      {"         "}This is to certify further that the above-mentioned
                       project is hereby recommended for payment.
                     </Text>
                     {/* Accepted by and Noted by, side by side */}

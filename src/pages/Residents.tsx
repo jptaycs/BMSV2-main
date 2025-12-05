@@ -7,7 +7,7 @@ import AddResidentModal from "@/features/residents/addResidentModal";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Trash, Users, UserCheck, UserMinus, Mars, Venus, User, Eye, Accessibility, } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { sort } from "@/service/resident/residentSort";
 import searchResident from "@/service/resident/searchResident";
@@ -98,6 +98,7 @@ export default function Residents() {
     setSearchParams(searchParams);
   };
 
+  const [total, setTotal] = useState(0);
   const filteredData = useMemo(() => {
     if (!residents) return [];
     const sortValue = searchParams.get("sort") ?? "All Residents";
@@ -111,8 +112,12 @@ export default function Residents() {
     return sorted;
   }, [searchParams, searchQuery, residents]);
 
+  useEffect(() => {
+    setTotal(filteredData.length);
+  }, [filteredData]);
+
   const res = residents?.residents || [];
-  const total = res.length;
+  // const total = res.length;
   const active = res.filter((r) => r.Status === "Active").length;
   const movedOut = res.filter((r) => r.Status === "Moved Out").length;
   const male = res.filter((r) => r.Gender === "Male").length;
