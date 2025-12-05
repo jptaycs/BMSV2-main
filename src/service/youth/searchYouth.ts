@@ -15,8 +15,6 @@ export default function searchYouth(term: string, data: Youth[]) {
       youth.CivilStatus,
       youth.Suffix,
       youth.Address,
-      youth.EmailAddress,
-      youth.ContactNumber,
       youth.EducationalBackground,
       youth.WorkStatus
     ];

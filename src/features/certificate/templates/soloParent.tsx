@@ -70,6 +70,8 @@ export default function soloParent() {
   const [residencyYear, setResidencyYear] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
   const [soloParentText, setSoloParentText] = useState("");
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
   const [assignedOfficial, setAssignedOfficial] = useState("");
@@ -315,6 +317,38 @@ export default function soloParent() {
               </div>
               <div className="mt-4">
                 <label
+                  htmlFor="orNumber"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  O.R. Number
+                </label>
+                <input
+                  id="orNumber"
+                  type="text"
+                  value={orNumber}
+                  onChange={(e) => setOrNumber(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter O.R. Number"
+                />
+              </div>
+              <div className="mt-4">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Amount
+                </label>
+                <input
+                  id="amount"
+                  type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter Amount"
+                />
+              </div>
+              <div className="mt-4">
+                <label
                   htmlFor="age"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
@@ -477,13 +511,15 @@ export default function soloParent() {
                         : ""
                     }${selectedResident.last_name}`,
                     type_: "Solo Parent Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: "",
                     civil_status: civilStatus || "",
                     soloParent_text: soloParentText,
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate(cert);
 
@@ -515,7 +551,7 @@ export default function soloParent() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -537,8 +573,8 @@ export default function soloParent() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{ }}>
+                         {"            "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.first_name} ${
@@ -581,10 +617,18 @@ export default function soloParent() {
                       <Text
                         style={[
                           styles.bodyText,
+                          { marginTop: 10, marginBottom: 8 },
+                        ]}
+                      >
+                        O.R. Number: {orNumber || "___"}, Amount: {amount || "___"}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.bodyText,
                           { textAlign: "justify", marginTop: 10 },
                         ]}
                       >
-                        This certification is being issued upon request of the
+                       {"            "}This certification is being issued upon request of the
                         interested party for record and reference purposes only.
                       </Text>
                       <Text

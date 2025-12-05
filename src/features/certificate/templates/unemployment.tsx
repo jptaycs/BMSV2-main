@@ -75,6 +75,9 @@ export default function Unemployment() {
   const [customPurpose, setCustomPurpose] = useState("");
   const [assignedOfficial, setAssignedOfficial] = useState("");
   const [residencyYear, setResidencyYear] = useState("");
+  // New state variables for O.R. Number and Amount
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("");
   // Prepared By state
   const { data: officials } = useOfficial();
   function getOfficialName(role: string, section: string) {
@@ -291,6 +294,40 @@ export default function Unemployment() {
                   placeholder="Enter name of preparer"
                 />
               </div>
+              {/* O.R. Number input */}
+              <div className="mt-4">
+                <label
+                  htmlFor="orNumber"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  O.R. Number
+                </label>
+                <input
+                  id="orNumber"
+                  type="text"
+                  value={orNumber}
+                  onChange={(e) => setOrNumber(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter Official Receipt Number"
+                />
+              </div>
+              {/* Amount input */}
+              <div className="mt-4">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Amount
+                </label>
+                <input
+                  id="amount"
+                  type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter amount"
+                />
+              </div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Age
                 </label>
@@ -420,12 +457,14 @@ export default function Unemployment() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Unemployment Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: "",
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -456,7 +495,7 @@ export default function Unemployment() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -478,8 +517,8 @@ export default function Unemployment() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{ }}>
+                          {"            "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -504,7 +543,7 @@ export default function Unemployment() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certifies further that the above-named person is
+                        {"            "}This certifies further that the above-named person is
                         currently{" "}
                         <Text style={{ fontWeight: "bold" }}>unemployed</Text>{" "}
                         and is actively seeking employment.
@@ -534,10 +573,20 @@ export default function Unemployment() {
                             }`
                           : ""}
                       </Text>
+                      {orNumber && (
+                        <Text style={[styles.bodyText, { marginBottom: 8 }]}>
+                          O.R. Number: {orNumber}
+                        </Text>
+                      )}
+                      {amount && (
+                        <Text style={[styles.bodyText, { marginBottom: 8 }]}>
+                          Amount: {amount}
+                        </Text>
+                      )}
                       <Text
                         style={[
                           styles.bodyText,
-                          { marginTop: 10, marginBottom: 8 },
+                          { marginTop: 0, marginBottom: 8 },
                         ]}
                       >
                         Given this{" "}

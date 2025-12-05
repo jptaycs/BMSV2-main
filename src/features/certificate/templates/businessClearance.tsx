@@ -85,7 +85,15 @@ export default function BusinessClearance() {
   const [businessType, setBusinessType] = useState("");
   const [businessLocation, setBusinessLocation] = useState("");
   const [businessOwner, setBusinessOwner] = useState("");
-  const [assignedOfficial, setAssignedOfficial] = useState("");
+  // const [assignedOfficial, setAssignedOfficial] = useState("");
+  // Added state for OR Number and Amount, and documentary stamp date
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100");
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const { data: officials } = useOfficial();
   const getOfficialName = (role: string, section: string) => {
     if (!officials) return null;
@@ -332,7 +340,7 @@ export default function BusinessClearance() {
                   placeholder="Enter Owner Name"
                 />
               </div>
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <label
                   htmlFor="assignedOfficial"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -362,7 +370,7 @@ export default function BusinessClearance() {
                       ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               <div className="mt-4">
                 <label
                   htmlFor="preparedBy"
@@ -412,6 +420,40 @@ export default function BusinessClearance() {
                 )}
               </div>
             </div>
+            {/* O.R. Number input */}
+            <div className="mt-4">
+              <label
+                htmlFor="orNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                O.R. Number
+              </label>
+              <input
+                id="orNumber"
+                type="text"
+                value={orNumber}
+                onChange={(e) => setOrNumber(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter O.R. Number"
+              />
+            </div>
+            {/* Amount input */}
+            <div className="mt-4">
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Amount (PHP)
+              </label>
+              <input
+                id="amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                min={0}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center gap-2">
             <Button
@@ -423,6 +465,9 @@ export default function BusinessClearance() {
                   alert("Please select a resident first.");
                   return;
                 }
+                // Format issued_date as YYYY-MM-DD HH:mm:ss
+                const issuedDate = new Date();
+                const formattedIssuedDate = `${issuedDate.getFullYear()}-${String(issuedDate.getMonth() + 1).padStart(2, '0')}-${String(issuedDate.getDate()).padStart(2, '0')} ${String(issuedDate.getHours()).padStart(2, '0')}:${String(issuedDate.getMinutes()).padStart(2, '0')}:${String(issuedDate.getSeconds()).padStart(2, '0')}`;
                 try {
                   const cert: any = {
                     resident_id: selectedResident.id,
@@ -432,12 +477,14 @@ export default function BusinessClearance() {
                         : ""
                     }${selectedResident.last_name}`,
                     type_: "Barangay Business Clearance",
-                    issued_date: new Date().toISOString(),
+                    issued_date: formattedIssuedDate,
                     ownership_text: businessOwner || "",
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: parseFloat(amount) || 0,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -468,7 +515,7 @@ export default function BusinessClearance() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -538,7 +585,7 @@ export default function BusinessClearance() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This is to certify that the above-named individual is a
+                        {"         "}  This is to certify that the above-named individual is a
                         bona fide resident of Barangay{" "}
                         {settings?.barangay || "________________"},
                         {settings?.municipality || "________________"},
@@ -552,7 +599,7 @@ export default function BusinessClearance() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This clearance is issued upon request for compliance
+                       {"         "}  This clearance is issued upon request for compliance
                         with local business regulations and may be presented to
                         relevant authorities as proof of residency and business
                         authorization.
@@ -591,8 +638,11 @@ export default function BusinessClearance() {
                     <CertificateFooter
                       styles={styles}
                       captainName={captainName}
-                      assignedOfficial={assignedOfficial}
+                      // assignedOfficial={assignedOfficial}
                       preparedBy={preparedBy}
+                      orNumber={orNumber}
+                      amount={amount}
+                      documentaryStampDate={documentaryStampDate}
                     />
                   </View>
                 </View>
