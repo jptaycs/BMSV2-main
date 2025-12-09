@@ -18,8 +18,6 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import ViewResidentModal from "@/features/residents/viewResidentModal";
 import { Resident } from "@/types/apitypes";
-import { ResidentPDF } from "@/components/pdf/residentpdf";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import {
   Dialog,
@@ -135,87 +133,100 @@ export default function Residents() {
     filteredResidents: Resident[];
   } | null>(null);
 
-  // Generic download handler with toast loading, success, and error
-  const handleDownloadPDF = async (
+  // CSV download handler
+  const handleDownloadCSV = async (
     filename: string,
     filter: string,
     filteredResidents: Resident[]
   ) => {
     setIsDownloading(true);
-    const toastId = toast.loading("Generating PDF, please wait...");
+    const toastId = toast.loading("Generating CSV, please wait...");
     try {
-      const casted: Resident[] = filteredResidents.map((r) => ({
-        ...r,
-        Birthday: typeof r.Birthday === "string" ? new Date(r.Birthday) : r.Birthday,
-      }));
-      const blob = await pdf(<ResidentPDF filter={filter} residents={casted} />).toBlob();
-      const buffer = await blob.arrayBuffer();
-      const contents = new Uint8Array(buffer);
-      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
-      toast.success(`${filter} PDF downloaded`, {
+      const header = [
+        "ID,Lastname,Firstname,Middlename,Suffix,CivilStatus,Gender,Birthday,Zone,Status"
+      ];
+
+      const rows = filteredResidents.map((r) => {
+        const birthday = typeof r.Birthday === "string" ? r.Birthday : new Date(r.Birthday).toISOString().slice(0,10);
+        return [
+          r.ID,
+          r.Lastname,
+          r.Firstname,
+          r.Middlename ?? "",
+          r.Suffix ?? "",
+          r.CivilStatus,
+          r.Gender,
+          birthday,
+          r.Zone,
+          r.Status,
+        ].join(",");
+      });
+
+      const csvContent = [...header, ...rows].join("\n");
+      const encoder = new TextEncoder();
+      const contents = encoder.encode(csvContent);
+
+      await writeFile(filename.replace('.pdf','.csv'), contents, { baseDir: BaseDirectory.Document });
+
+      toast.success(`${filter} CSV downloaded`, {
         description: "Saved in Documents folder",
         id: toastId,
       });
     } catch (e) {
-      toast.error(`Failed to save ${filter} PDF`, {
-        id: toastId,
-      });
+      toast.error(`Failed to save ${filter} CSV`, { id: toastId });
     } finally {
       setIsDownloading(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     }
   };
 
   const handleDownloadAllResidents = () =>
-    setPendingDownload({ filename: "ResidentRecords.pdf", filter: "All Residents", filteredResidents: res });
+    setPendingDownload({ filename: "ResidentRecords.csv", filter: "All Residents", filteredResidents: res });
 
   const handleDownloadMaleResidents = () =>
     setPendingDownload({
-      filename: "MaleResidents.pdf",
+      filename: "MaleResidents.csv",
       filter: "Male Residents",
       filteredResidents: res.filter((r) => r.Gender === "Male"),
     });
 
   const handleDownloadFemaleResidents = () =>
     setPendingDownload({
-      filename: "FemaleResidents.pdf",
+      filename: "FemaleResidents.csv",
       filter: "Female Residents",
       filteredResidents: res.filter((r) => r.Gender === "Female"),
     });
 
   const handleDownloadSeniorResidents = () =>
     setPendingDownload({
-      filename: "SeniorResidents.pdf",
+      filename: "SeniorResidents.csv",
       filter: "Senior Residents",
       filteredResidents: res.filter((r) => r.IsSenior),
     });
 
   const handleDownloadPWDResidents = () =>
     setPendingDownload({
-      filename: "PWDs.pdf",
+      filename: "PWDs.csv",
       filter: "PWD",
       filteredResidents: res.filter((r) => r.IsPWD),
     });
 
   const handleDownloadSoloParents = () =>
     setPendingDownload({
-      filename: "SoloParents.pdf",
+      filename: "SoloParents.csv",
       filter: "Solo Parents",
       filteredResidents: res.filter((r) => r.IsSolo),
     });
 
   const handleDownloadActiveResidents = () =>
     setPendingDownload({
-      filename: "ActiveResidents.pdf",
+      filename: "ActiveResidents.csv",
       filter: "Active Residents",
       filteredResidents: res.filter((r) => r.Status === "Active"),
     });
 
   const handleDownloadMovedOutResidents = () =>
     setPendingDownload({
-      filename: "MovedOutResidents.pdf",
+      filename: "MovedOutResidents.csv",
       filter: "Moved Out Residents",
       filteredResidents: res.filter((r) => r.Status === "Moved Out"),
     });
@@ -224,7 +235,7 @@ export default function Residents() {
     if (!pendingDownload) return;
     const { filename, filter, filteredResidents } = pendingDownload;
     setPendingDownload(null);
-    handleDownloadPDF(filename, filter, filteredResidents);
+    handleDownloadCSV(filename, filter, filteredResidents);
   };
 
   const cancelDownload = () => setPendingDownload(null);
@@ -424,7 +435,7 @@ export default function Residents() {
             <DialogHeader>
              <DialogTitle className="text-black">Confirm Download</DialogTitle>
               <DialogDescription>
-                Are you sure you want to download the {pendingDownload.filter} PDF?
+                Are you sure you want to download the {pendingDownload.filter} CSV?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">

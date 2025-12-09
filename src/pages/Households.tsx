@@ -12,9 +12,7 @@ import { useSearchParams } from "react-router-dom";
 import { Household } from "@/types/apitypes";
 import { sort } from "@/service/household/householdSort";
 import SummaryCard from "@/components/summary-card/household";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
-import { HouseholdPDF } from "@/components/pdf/householdpdf";
 import { toast } from "sonner";
 import { useHousehold } from "@/features/api/household/useHousehold";
 import ViewHouseholdModal from "@/features/households/viewHouseholdModal";
@@ -146,53 +144,72 @@ export default function Households() {
     return sorted;
   }, [searchParams, searchQuery, parsedData]);
 
-  // Download PDF logic from Residents page adapted
-  const downloadPDF = async (filename: string, filter: string, filteredHouseholds: Household[]) => {
+  // Download CSV logic replacing PDF download
+  const downloadCSV = async (filename: string, filter: string, filteredHouseholds: any[]) => {
     setIsDownloading(true);
-    const toastId = toast.loading("Generating PDF, please wait...");
+    const toastId = toast.loading("Generating CSV, please wait...");
     try {
-      const blob = await pdf(<HouseholdPDF filter={filter} households={filteredHouseholds} />).toBlob();
-      const buffer = await blob.arrayBuffer();
-      const contents = new Uint8Array(buffer);
-      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
-      toast.success(`${filter} PDF downloaded`, {
+      const header = [
+        "ID,Household Number,Type,Head,Zone,Date of Residency,Status"
+      ];
+
+      const rows = filteredHouseholds.map((h) => {
+        const date = h.date instanceof Date
+          ? h.date.toISOString().slice(0, 10)
+          : '';
+
+        return [
+          h.id,
+          h.household_number,
+          h.type,
+          h.head,
+          h.zone,
+          date,
+          h.status,
+        ].join(",");
+      });
+
+      const csvContent = [...header, ...rows].join("\n");
+      const encoder = new TextEncoder();
+      const contents = encoder.encode(csvContent);
+
+      await writeFile(filename.replace('.pdf', '.csv'), contents, {
+        baseDir: BaseDirectory.Document,
+      });
+
+      toast.success(`${filter} CSV downloaded`, {
         description: "Saved in Documents folder",
         id: toastId,
       });
     } catch (error) {
-      toast.error(`Failed to save ${filter} PDF`, {
-        id: toastId,
-      });
+      toast.error(`Failed to save ${filter} CSV`, { id: toastId });
     } finally {
       setIsDownloading(false);
       setPendingDownload(null);
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
     }
   };
 
   // Handlers to trigger confirmation dialog for download
   const handleDownloadAllHouseholds = () =>
-    setPendingDownload({ filename: "AllHouseholds.pdf", filter: "All Households", filteredHouseholds: parsedData });
+    setPendingDownload({ filename: "AllHouseholds.csv", filter: "All Households", filteredHouseholds: parsedData });
 
   const handleDownloadActiveHouseholds = () =>
     setPendingDownload({
-      filename: "ActiveHouseholds.pdf",
+      filename: "ActiveHouseholds.csv",
       filter: "Active Households",
       filteredHouseholds: parsedData.filter((d) => d.status === "Active"),
     });
 
   const handleDownloadRenterHouseholds = () =>
     setPendingDownload({
-      filename: "RenterHouseholds.pdf",
+      filename: "RenterHouseholds.csv",
       filter: "Renter Households",
       filteredHouseholds: parsedData.filter((d) => d.type === "Renter"),
     });
 
   const handleDownloadOwnerHouseholds = () =>
     setPendingDownload({
-      filename: "OwnerHouseholds.pdf",
+      filename: "OwnerHouseholds.csv",
       filter: "Owner Households",
       filteredHouseholds: parsedData.filter((d) => d.type === "Owner"),
     });
@@ -202,7 +219,7 @@ export default function Households() {
     if (!pendingDownload) return;
     const { filename, filter, filteredHouseholds } = pendingDownload;
     setPendingDownload(null);
-    downloadPDF(filename, filter, filteredHouseholds);
+    downloadCSV(filename, filter, filteredHouseholds);
   };
 
   const cancelDownload = () => setPendingDownload(null);
@@ -367,7 +384,7 @@ export default function Households() {
             <DialogHeader>
               <DialogTitle className="text-black">Confirm Download</DialogTitle>
               <DialogDescription>
-                Are you sure you want to download the {pendingDownload.filter} PDF?
+                Are you sure you want to download the {pendingDownload.filter} CSV?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">
