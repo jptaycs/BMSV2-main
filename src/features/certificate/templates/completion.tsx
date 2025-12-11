@@ -43,7 +43,7 @@ export default function Completion() {
     useState("administration");
   const [notedBy, setNotedBy] = useState("ALVIN C. FEDERICO");
   const [notedByRole, setNotedByRole] = useState("Municipal Engineer");
-  const [acceptedBy, setAcceptedBy] = useState("KERWIN M. DONACAO");
+  const [acceptedBy, setAcceptedBy] = useState("ROMEO B. CASIAO");
   const [acceptedByRole, setAcceptedByRole] = useState("Barangay Captain");
 
   const [openCalendarFrom, setOpenCalendarFrom] = useState(false);
