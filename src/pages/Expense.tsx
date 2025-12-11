@@ -10,9 +10,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {Trash, Banknote, Landmark, Layers, PiggyBank, DollarSign, Wallet, Salad, Shirt, Eye,} from "lucide-react";
 import { toast } from "sonner";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
-import { ExpensePDF } from "@/components/pdf/expensepdf";
 import SummaryCardExpense from "@/components/summary-card/expense";
 import { useSearchParams } from "react-router-dom";
 import { sort } from "@/service/expense/expenseSort";
@@ -112,6 +110,33 @@ export default function ExpenseNewPage() {
     setDownloadAction(() => callback);
   };
 
+  // CSV generation helper
+  const generateCSV = async (filename: string, rows: Expense[], _filter: string) => {
+    const header = [
+      "Type,Category,OR,PaidTo,PaidBy,Amount,Date"
+    ];
+
+    const body = rows.map((e) => {
+      const formattedDate = typeof e.Date === "string"
+        ? e.Date
+        : new Date(e.Date).toISOString().slice(0, 10);
+
+      return [
+        e.Type,
+        e.Category,
+        e.OR ?? "",
+        e.PaidTo,
+        e.PaidBy,
+        e.Amount,
+        formattedDate,
+      ].join(",");
+    });
+
+    const csv = [...header, ...body].join("\n");
+    const encoder = new TextEncoder();
+    await writeFile(filename, encoder.encode(csv), { baseDir: BaseDirectory.Document });
+  };
+
   const handleConfirmDownload = async () => {
     if (!downloadAction) return;
     setIsDownloading(true);
@@ -119,7 +144,7 @@ export default function ExpenseNewPage() {
 
     try {
       await downloadAction();
-      toast.success("PDF downloaded", {
+      toast.success("CSV downloaded", {
         description: "Saved in Documents folder",
       });
 
@@ -144,15 +169,7 @@ export default function ExpenseNewPage() {
           icon={<DollarSign size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const blob = await pdf(
-                <ExpensePDF filter="All Expenses" expenses={filteredData} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "ExpenseRecords.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              await generateCSV("ExpenseRecords.csv", filteredData, "All Expenses");
             })
           }
         />
@@ -166,21 +183,8 @@ export default function ExpenseNewPage() {
           icon={<Landmark size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const filtered = filteredData.filter(
-                (d) => d.Category === "Infrastructure"
-              );
-              const blob = await pdf(
-                <ExpensePDF
-                  filter="Infrastructure Expenses"
-                  expenses={filtered}
-                />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "InfrastructureExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              const filtered = filteredData.filter((d) => d.Category === "Infrastructure");
+              await generateCSV("InfrastructureExpenses.csv", filtered, "Infrastructure Expenses");
             })
           }
         />
@@ -194,18 +198,8 @@ export default function ExpenseNewPage() {
           icon={<PiggyBank size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const filtered = filteredData.filter(
-                (d) => d.Category === "Honoraria"
-              );
-              const blob = await pdf(
-                <ExpensePDF filter="Honoraria Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "HonorariaExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              const filtered = filteredData.filter((d) => d.Category === "Honoraria");
+              await generateCSV("HonorariaExpenses.csv", filtered, "Honoraria Expenses");
             })
           }
         />
@@ -219,18 +213,8 @@ export default function ExpenseNewPage() {
           icon={<Wallet size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const filtered = filteredData.filter(
-                (d) => d.Category === "Utilities"
-              );
-              const blob = await pdf(
-                <ExpensePDF filter="Utilities Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "UtilitiesExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              const filtered = filteredData.filter((d) => d.Category === "Utilities");
+              await generateCSV("UtilitiesExpenses.csv", filtered, "Utilities Expenses");
             })
           }
         />
@@ -244,18 +228,8 @@ export default function ExpenseNewPage() {
           icon={<Banknote size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const filtered = filteredData.filter(
-                (d) => d.Category === "Local Funds"
-              );
-              const blob = await pdf(
-                <ExpensePDF filter="Local Funds Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "LocalFundsExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              const filtered = filteredData.filter((d) => d.Category === "Local Funds");
+              await generateCSV("LocalFundsExpenses.csv", filtered, "Local Funds Expenses");
             })
           }
         />
@@ -270,15 +244,7 @@ export default function ExpenseNewPage() {
           onClick={() =>
             startDownload(async () => {
               const filtered = filteredData.filter((d) => d.Category === "Foods");
-              const blob = await pdf(
-                <ExpensePDF filter="Foods Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "FoodsExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              await generateCSV("FoodsExpenses.csv", filtered, "Foods Expenses");
             })
           }
         />
@@ -293,13 +259,7 @@ export default function ExpenseNewPage() {
           onClick={() =>
             startDownload(async () => {
               const filtered = filteredData.filter((d) => d.Category === "IRA");
-              const blob = await pdf(
-                <ExpensePDF filter="IRA Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile("IRAExpenses.pdf", new Uint8Array(buffer), {
-                baseDir: BaseDirectory.Document,
-              });
+              await generateCSV("IRAExpenses.csv", filtered, "IRA Expenses");
             })
           }
         />
@@ -313,18 +273,8 @@ export default function ExpenseNewPage() {
           icon={<Shirt size={50} />}
           onClick={() =>
             startDownload(async () => {
-              const filtered = filteredData.filter(
-                (d) => d.Category === "Others"
-              );
-              const blob = await pdf(
-                <ExpensePDF filter="Other Expenses" expenses={filtered} />
-              ).toBlob();
-              const buffer = await blob.arrayBuffer();
-              await writeFile(
-                "OtherExpenses.pdf",
-                new Uint8Array(buffer),
-                { baseDir: BaseDirectory.Document }
-              );
+              const filtered = filteredData.filter((d) => d.Category === "Others");
+              await generateCSV("OtherExpenses.csv", filtered, "Other Expenses");
             })
           }
         />
@@ -457,7 +407,7 @@ export default function ExpenseNewPage() {
           <DialogHeader>
             <DialogTitle className="text-black">Confirm Download</DialogTitle>
           </DialogHeader>
-          <p className="text-black">Do you want to download this PDF?</p>
+          <p className="text-black">Do you want to download this CSV?</p>
           <DialogFooter>
             <Button
               onClick={() => setConfirmDownload(false)}

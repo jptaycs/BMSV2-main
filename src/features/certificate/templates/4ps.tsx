@@ -101,6 +101,13 @@ export default function Fourps() {
   }, [allResidents, value]);
   const preparedByDefault = getOfficialName("secretary", "barangay officials");
   const [preparedBy, setPreparedBy] = useState(preparedByDefault || "");
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("100");
+  const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const [, setLogoDataUrl] = useState<string | null>(null);
   const [, setLogoMunicipalityDataUrl] = useState<string | null>(null);
   const [settings, setSettings] = useState<{
@@ -415,6 +422,32 @@ export default function Fourps() {
                   placeholder="Enter preparer's name"
                 />
               </div>
+              <div className="mt-4">
+                <label htmlFor="orNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  O.R. Number
+                </label>
+                <input
+                  id="orNumber"
+                  type="text"
+                  value={orNumber}
+                  onChange={(e) => setOrNumber(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter O.R. Number"
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount (PHP)
+                </label>
+                <input
+                  id="amount"
+                  type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter Amount"
+                />
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center gap-4">
@@ -425,6 +458,9 @@ export default function Fourps() {
                   return;
                 }
                 try {
+                  const issuedDate = new Date();
+                  const formattedIssuedDate = `${issuedDate.getFullYear()}-${String(issuedDate.getMonth() + 1).padStart(2, "0")}-${String(issuedDate.getDate()).padStart(2, "0")} ${String(issuedDate.getHours()).padStart(2, "0")}:${String(issuedDate.getMinutes()).padStart(2, "0")}:${String(issuedDate.getSeconds()).padStart(2, "0")}`;
+
                   const cert: any = {
                     resident_id: selectedResident.ID,
                     resident_name: `${selectedResident.Firstname} ${
@@ -433,12 +469,13 @@ export default function Fourps() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "4Ps Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: formattedIssuedDate,
                     ownership_text: "",
                     civil_status: civilStatus || "",
-                    purpose:
-                      purpose === "custom" ? customPurpose || "" : purpose,
+                    purpose: purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -465,7 +502,7 @@ export default function Fourps() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -488,7 +525,7 @@ export default function Fourps() {
                         ]}
                       >
                         <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        {"         "}  This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -514,7 +551,7 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certifies further that the above-named person is a
+                        {"         "}  This certifies further that the above-named person is a
                         member of the{" "}
                         <Text style={{ fontWeight: "bold" }}>
                           4Ps (Programang Pantawid Pamilyang Pilipino)
@@ -530,7 +567,7 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certification is issued upon request of the
+                        {"         "} This certification is issued upon request of the
                         interested party for record and reference purposes.
                       </Text>
                       <Text style={[styles.bodyText, { marginTop: 8 }]}></Text>
@@ -575,6 +612,9 @@ export default function Fourps() {
                     captainName={captainName ?? ""}
                     assignedOfficial={assignedOfficial}
                     preparedBy={preparedBy}
+                    orNumber={orNumber}
+                    amount={amount}
+                    documentaryStampDate={documentaryStampDate}
                   />
                 </View>
               </Page>

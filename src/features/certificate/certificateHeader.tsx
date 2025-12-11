@@ -69,7 +69,7 @@ export default function CertificateHeader() {
         }}
       />
 
-      <View style={{ marginBottom: 10, marginTop: 10 }}>
+      <View style={{ marginBottom: 10, marginTop: 0 }}>
         <Text style={{ textAlign: "center", fontSize: 16 }}>
           Republic of the Philippines
         </Text>
@@ -96,7 +96,7 @@ export default function CertificateHeader() {
           textAlign: "center",
           fontWeight: "bold",
           fontSize: 16,
-          marginBottom: 10,
+          marginBottom: 30,
         }}
       >
         OFFICE OF THE PUNONG BARANGAY

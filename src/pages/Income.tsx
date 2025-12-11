@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import {DollarSign, Banknote, PiggyBank, Coins, Wallet, Layers, Shirt, Trash, Eye, Droplets,} from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import DataTable from "@/components/ui/datatable";
 import Filter from "@/components/ui/filter";
@@ -23,7 +22,6 @@ import AddIncomeModal from "@/features/income/addIncomeModal";
 import ViewIncomeModal from "@/features/income/viewIncomeModal";
 import { useIncome } from "@/features/api/income/useIncome";
 import { useDeleteIncome } from "@/features/api/income/useDeleteIncome";
-import { IncomePDF } from "@/components/pdf/incomepdf";
 import SummaryCardIncome from "@/components/summary-card/income";
 import searchIncome from "@/service/income/searchIncome";
 import { sort } from "@/service/income/incomeSort";
@@ -99,24 +97,46 @@ export default function IncomeNewPage() {
     data: Income[];
   } | null>(null);
 
-  const handleDownloadPDF = async (filename: string, filter: string, data: Income[]) => {
+  const handleDownloadCSV = async (filename: string, filter: string, data: Income[]) => {
     setIsDownloading(true);
-    const toastId = toast.loading("Generating PDF, please wait...");
-    try {
-      const blob = await pdf(<IncomePDF filter={filter} incomes={data} />).toBlob();
-      const buffer = await blob.arrayBuffer();
-      const contents = new Uint8Array(buffer);
-      await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
+    const toastId = toast.loading("Generating CSV, please wait...");
 
-      toast.success(`${filter} PDF downloaded`, {
+    try {
+      const header = [
+        "ID,Type,Category,OR Number,Amount,Received From,Received By,Date Issued"
+      ];
+
+      const rows = data.map((r) => {
+        const date = r.DateReceived
+          ? format(r.DateReceived, "yyyy-MM-dd")
+          : "";
+
+        return [
+          r.ID,
+          r.Type,
+          r.Category,
+          r.OR,
+          r.Amount,
+          r.ReceivedFrom,
+          r.ReceivedBy,
+          date,
+        ].join(",");
+      });
+
+      const csvContent = [...header, ...rows].join("\n");
+      const encoder = new TextEncoder();
+      const contents = encoder.encode(csvContent);
+
+      await writeFile(filename.replace('.pdf','.csv'), contents, { baseDir: BaseDirectory.Document });
+
+      toast.success(`${filter} CSV downloaded`, {
         description: "Saved in Documents folder",
         id: toastId,
       });
     } catch (e) {
-      toast.error(`Failed to save ${filter} PDF`, { id: toastId });
+      toast.error(`Failed to save ${filter} CSV`, { id: toastId });
     } finally {
       setIsDownloading(false);
-      setTimeout(() => window.location.reload(), 1000);
     }
   };
 
@@ -124,7 +144,7 @@ export default function IncomeNewPage() {
     if (!pendingDownload) return;
     const { filename, filter, data } = pendingDownload;
     setPendingDownload(null);
-    handleDownloadPDF(filename, filter, data);
+    handleDownloadCSV(filename, filter, data);
   };
 
   const cancelDownload = () => setPendingDownload(null);
@@ -142,7 +162,7 @@ export default function IncomeNewPage() {
             icon={<DollarSign size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "IncomeRecords.pdf",
+                filename: "IncomeRecords.csv",
                 filter: "All Income",
                 data: filteredData,
               })
@@ -160,7 +180,7 @@ export default function IncomeNewPage() {
             icon={<Banknote size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "LocalRevenue.pdf",
+                filename: "LocalRevenue.csv",
                 filter: "Local Revenue",
                 data: filteredData.filter((d) => d.Category === "Local Revenue"),
               })
@@ -178,7 +198,7 @@ export default function IncomeNewPage() {
             icon={<PiggyBank size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "TaxRevenue.pdf",
+                filename: "TaxRevenue.csv",
                 filter: "Tax Revenue",
                 data: filteredData.filter((d) => d.Category === "Tax Revenue"),
               })
@@ -196,7 +216,7 @@ export default function IncomeNewPage() {
             icon={<Droplets size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "GovernmentGrants.pdf",
+                filename: "GovernmentGrants.csv",
                 filter: "Water System",
                 data: filteredData.filter((d) => d.Category === "Water System"),
               })
@@ -214,7 +234,7 @@ export default function IncomeNewPage() {
             icon={<Coins size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "ServiceRevenue.pdf",
+                filename: "ServiceRevenue.csv",
                 filter: "Service Revenue",
                 data: filteredData.filter((d) => d.Category === "Service Revenue"),
               })
@@ -232,7 +252,7 @@ export default function IncomeNewPage() {
             icon={<Wallet size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "RentalIncome.pdf",
+                filename: "RentalIncome.csv",
                 filter: "Rental Income",
                 data: filteredData.filter((d) => d.Category === "Rental Income"),
               })
@@ -250,7 +270,7 @@ export default function IncomeNewPage() {
             icon={<Layers size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "GovernmentFunds.pdf",
+                filename: "GovernmentFunds.csv",
                 filter: "Government Funds",
                 data: filteredData.filter((d) => d.Category === "Government Funds"),
               })
@@ -268,7 +288,7 @@ export default function IncomeNewPage() {
             icon={<Shirt size={50} />}
             onClick={() =>
               setPendingDownload({
-                filename: "Others.pdf",
+                filename: "Others.csv",
                 filter: "Others",
                 data: filteredData.filter((d) => d.Category === "Others"),
               })
@@ -403,7 +423,7 @@ export default function IncomeNewPage() {
             <DialogHeader>
               <DialogTitle className="text-black">Confirm Download</DialogTitle>
               <DialogDescription>
-                Are you sure you want to download the {pendingDownload.filter} PDF?
+                Are you sure you want to download the {pendingDownload.filter} CSV?
               </DialogDescription>
             </DialogHeader>
 

@@ -5,6 +5,9 @@ type CertificateFooterProps = {
   captainName: string | null;
   assignedOfficial?: string;
   preparedBy?: string;
+  orNumber?: string;
+  amount?: string;
+  documentaryStampDate?: string;
 };
 
 export default function CertificateFooter({
@@ -12,6 +15,9 @@ export default function CertificateFooter({
   captainName,
   assignedOfficial,
   preparedBy = "Evamgeline Diesta",
+  orNumber = "",
+  amount = "",
+  documentaryStampDate = "",
 }: CertificateFooterProps) {
   return (
     <View
@@ -53,6 +59,19 @@ export default function CertificateFooter({
             <Text style={[styles.bodyText, { marginBottom: 10 }]}>
               Punong Barangay
             </Text>
+            {/* New Section with marginTop 50 */}
+            <View style={{ marginTop: 50 }}>
+              <Text style={[styles.bodyText]}>
+                O.R. Number: {orNumber || "________________"}
+              </Text>
+              <Text style={[styles.bodyText]}>
+                Amount: {amount || "________________"} PHP
+              </Text>
+              <Text style={[styles.bodyText]}>Documentary Stamp: 30 PHP</Text>
+              <Text style={[styles.bodyText]}>
+                Date: {documentaryStampDate}
+              </Text>
+            </View>
           </>
         ) : (
           <>
@@ -71,6 +90,21 @@ export default function CertificateFooter({
             <Text style={[styles.bodyText, { marginBottom: 12 }]}>
               Punong Barangay
             </Text>
+            {/* New Section with marginTop 50 */}
+            <View style={{ marginTop: 50 }}>
+              <Text style={[styles.bodyText, { fontSize: 9, fontWeight: 400 }]}>
+                O.R. Number: {orNumber || "________________"}
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, fontWeight: 400 }]}>
+                Amount: {amount || "________________"} PHP
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, fontWeight: 400 }]}>
+                Documentary Stamp: 30 PHP
+              </Text>
+              <Text style={[styles.bodyText, { fontSize: 9, fontWeight: 400 }]}>
+                Date: {documentaryStampDate}
+              </Text>
+            </View>
           </>
         )}
       </View>
@@ -83,12 +117,10 @@ export default function CertificateFooter({
         >
           Not valid without dry seal
         </Text>
-         <Text style={[styles.bodyText, { fontWeight: "bold" }]}>
+        <Text style={[styles.bodyText, { fontWeight: "bold" }]}>
           {preparedBy}
         </Text>
-        <Text style={[styles.bodyText, { marginTop: 6 }]}>
-          Prepared by:
-        </Text>
+        <Text style={[styles.bodyText, { marginTop: 6 }]}>Prepared by:</Text>
       </View>
     </View>
   );
