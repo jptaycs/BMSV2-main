@@ -140,7 +140,7 @@ export const SummonPDF = ({ blotters }: Props) => {
               </View>
               {/* Footer */}
               <Text style={{ marginTop: 30, marginBottom: 10 }}>
-                Prepared this <Text style={{ fontWeight: "bold" }}>{todayDate}</Text>, at Barangay Poblacion, Pamplona, Camarines Sur.
+                Prepared this <Text style={{ fontWeight: "bold" }}>{todayDate}</Text>, at Barangay Calawat, Pamplona, Camarines Sur.
               </Text>
               <View style={{ marginTop: 40, alignItems: "flex-end" }}>
                 <Text style={{ fontWeight: "bold", textDecoration: "underline" }}>
