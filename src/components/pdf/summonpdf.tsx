@@ -144,7 +144,7 @@ export const SummonPDF = ({ blotters }: Props) => {
               </Text>
               <View style={{ marginTop: 40, alignItems: "flex-end" }}>
                 <Text style={{ fontWeight: "bold", textDecoration: "underline" }}>
-                  HON. KERWIN M. DONACAO
+                  HON. ROMEO B. CASIAO
                 </Text>
                 <Text>Punong Barangay/Lupon Chairman</Text>
               </View>
