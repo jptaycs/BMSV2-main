@@ -51,6 +51,8 @@ export default function Residency() {
   const [residencyYear, setResidencyYear] = useState("");
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("");
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -333,6 +335,32 @@ export default function Residency() {
               )}
             </div>
             <div className="mt-4">
+              <label htmlFor="orNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                O.R. Number
+              </label>
+              <input
+                id="orNumber"
+                type="text"
+                value={orNumber}
+                onChange={(e) => setOrNumber(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter O.R. Number"
+              />
+            </div>
+            <div className="mt-4">
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                Amount
+              </label>
+              <input
+                id="amount"
+                type="text"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter Amount"
+              />
+            </div>
+            <div className="mt-4">
               <label
                 htmlFor="assignedOfficial"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -396,13 +424,15 @@ export default function Residency() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Residency Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: "",
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
                     prepared_by: preparedBy,
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate.mutateAsync(cert);
                   toast.success("Certificate saved successfully!", {
@@ -433,7 +463,7 @@ export default function Residency() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -455,8 +485,8 @@ export default function Residency() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{ }}>
+                         {"            "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -482,7 +512,7 @@ export default function Residency() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        This certification is being issued upon the request of
+                        {"            "}This certification is being issued upon the request of
                         the aforementioned person for residency verification and
                         for the following purpose:{" "}
                         {purpose === "custom"

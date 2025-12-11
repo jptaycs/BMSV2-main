@@ -10,14 +10,12 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Youth } from "@/types/apitypes";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { useDeleteYouth } from "@/features/api/youth/useDeleteYouth";
 import { useYouth } from "@/features/api/youth/useYouth";
 import searchYouth from "@/service/youth/searchYouth";
 import { youthSort } from "@/service/youth/youthSort";
 import SummaryCardYouth from "@/components/summary-card/youth";
-import { YouthPDF } from "@/components/pdf/youthpdf";
 import AddYouthModal from "@/features/youth/addYouthModal";
 import ViewYouthModal from "@/features/youth/viewYouthModal";
 import {
@@ -96,39 +94,56 @@ export default function YouthPage() {
     return sorted ?? [];
   }, [searchParams, searchQuery, youthData]);
 
-  const res = youthData?.youths || [];
-  const total = res.length;
-  const inSchool = res.filter((r) => r.InSchoolYouth).length;
-  const outOfSchool = res.filter((r) => r.OutOfSchoolYouth).length;
-  const working = res.filter((r) => r.WorkingYouth).length;
-  const withNeeds = res.filter((r) => r.YouthWithSpecificNeeds).length;
-  const skVoters = res.filter((r) => r.IsSKVoter).length;
+  const total = filteredData.length;
+  const inSchool = filteredData.filter((r) => r.InSchoolYouth).length;
+  const outOfSchool = filteredData.filter((r) => r.OutOfSchoolYouth).length;
+  const working = filteredData.filter((r) => r.WorkingYouth).length;
+  const withNeeds = filteredData.filter((r) => r.YouthWithSpecificNeeds).length;
+  const skVoters = filteredData.filter((r) => r.IsSKVoter).length;
 
   const startDownload = async (filename: string, filter: string, filteredYouths: Youth[]) => {
     setIsDownloading(true);
-    const toastId = toast.loading("Generating PDF, please wait...");
+    const toastId = toast.loading("Generating CSV, please wait...");
     try {
-      // Ensure all dates are Date objects
-      const casted = filteredYouths.map((y) => ({
-        ...y,
-        // If any date field requires conversion, handle here
-      }));
-      const blob = await pdf(<YouthPDF filter={filter} youths={casted} />).toBlob();
-      const buffer = await blob.arrayBuffer();
-      const contents = new Uint8Array(buffer);
+      const header = [
+        "ID,Lastname,Firstname,Middlename,Suffix,Gender,Zone,Email,Contact,Education,WorkStatus,InSchoolYouth,OutOfSchoolYouth,WorkingYouth,YouthWithSpecificNeeds,IsSKVoter"
+      ];
+
+      const rows = filteredYouths.map((y) => [
+        y.ID,
+        y.Lastname,
+        y.Firstname,
+        y.Middlename ?? "",
+        y.Suffix ?? "",
+        y.Gender,
+        y.Zone,
+        y.EmailAddress,
+        y.ContactNumber,
+        y.EducationalBackground,
+        y.WorkStatus,
+        y.InSchoolYouth,
+        y.OutOfSchoolYouth,
+        y.WorkingYouth,
+        y.YouthWithSpecificNeeds,
+        y.IsSKVoter,
+      ].join(","));
+
+      const csvContent = [...header, ...rows].join("\n");
+      const encoder = new TextEncoder();
+      const contents = encoder.encode(csvContent);
+
       await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
-      toast.success(`${filter} PDF downloaded`, {
+
+      toast.success(`${filter} CSV downloaded`, {
         description: "Saved in Documents folder",
         id: toastId,
       });
     } catch (e) {
-      toast.error(`Failed to save ${filter} PDF`, { id: toastId });
+      toast.error(`Failed to save ${filter} CSV`, { id: toastId });
     } finally {
       setIsDownloading(false);
       setPendingDownload(null);
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      setTimeout(() => window.location.reload(), 2000);
     }
   };
 
@@ -153,7 +168,7 @@ export default function YouthPage() {
           title="Total Youth"
           value={total}
           icon={<Users size={50} />}
-          onClick={() => prepareDownload("YouthRecords.pdf", "All Youth", res)}
+          onClick={() => prepareDownload("YouthRecords.csv", "All Youth", filteredData)}
         />
         <SummaryCardYouth
           title="In School"
@@ -161,9 +176,9 @@ export default function YouthPage() {
           icon={<GraduationCap size={50} />}
           onClick={() =>
             prepareDownload(
-              "InSchoolYouth.pdf",
+              "InSchoolYouth.csv",
               "In School Youth",
-              res.filter((r) => r.InSchoolYouth)
+              filteredData.filter((r) => r.InSchoolYouth)
             )
           }
         />
@@ -173,9 +188,9 @@ export default function YouthPage() {
           icon={<Users size={50} />}
           onClick={() =>
             prepareDownload(
-              "OutOfSchoolYouth.pdf",
+              "OutOfSchoolYouth.csv",
               "Out of School Youth",
-              res.filter((r) => r.OutOfSchoolYouth)
+              filteredData.filter((r) => r.OutOfSchoolYouth)
             )
           }
         />
@@ -185,9 +200,9 @@ export default function YouthPage() {
           icon={<Briefcase size={50} />}
           onClick={() =>
             prepareDownload(
-              "WorkingYouth.pdf",
+              "WorkingYouth.csv",
               "Working Youth",
-              res.filter((r) => r.WorkingYouth)
+              filteredData.filter((r) => r.WorkingYouth)
             )
           }
         />
@@ -197,9 +212,9 @@ export default function YouthPage() {
           icon={<HandHelping size={50} />}
           onClick={() =>
             prepareDownload(
-              "YouthWithSpecificNeeds.pdf",
+              "YouthWithSpecificNeeds.csv",
               "Youth with Specific Needs",
-              res.filter((r) => r.YouthWithSpecificNeeds)
+              filteredData.filter((r) => r.YouthWithSpecificNeeds)
             )
           }
         />
@@ -209,9 +224,9 @@ export default function YouthPage() {
           icon={<Vote size={50} />}
           onClick={() =>
             prepareDownload(
-              "SKVoters.pdf",
+              "SKVoters.csv",
               "SK Voters",
-              res.filter((r) => r.IsSKVoter)
+              filteredData.filter((r) => r.IsSKVoter)
             )
           }
         />
@@ -332,7 +347,7 @@ export default function YouthPage() {
             <DialogHeader>
               <DialogTitle className="text-black">Confirm Download</DialogTitle>
               <DialogDescription>
-                Are you sure you want to download the {pendingDownload.filter} PDF?
+                Are you sure you want to download the {pendingDownload.filter} CSV?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">

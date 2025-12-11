@@ -57,6 +57,8 @@ type Resident = {
 };
 
 export default function Marriage() {
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("");
   const navigate = useNavigate();
   const [openMale, setOpenMale] = useState(false);
   const [openFemale, setOpenFemale] = useState(false);
@@ -433,6 +435,40 @@ export default function Marriage() {
                   placeholder="e.g., 24"
                 />
               </div>
+          {/* O.R. Number input field */}
+          <div className="mt-4">
+            <label
+              htmlFor="orNumber"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              O.R. Number
+            </label>
+            <input
+              id="orNumber"
+              type="text"
+              value={orNumber}
+              onChange={(e) => setOrNumber(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              placeholder="Enter O.R. Number"
+            />
+          </div>
+          {/* Amount input field */}
+          <div className="mt-4">
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Amount
+            </label>
+            <input
+              id="amount"
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              placeholder="Enter Amount"
+            />
+          </div>
             </div>
             <div className="mt-4">
               <label
@@ -502,11 +538,13 @@ export default function Marriage() {
                         : ""
                     }${selectedResident2?.Lastname ?? ""}`,
                     type_: "Marriage Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().split('T')[0], // format YYYY-MM-DD
                     ownership_text: "",
                     civil_status: `${civilStatusMale}/${civilStatusFemale}`,
                     age: ageMale ? parseInt(ageMale, 10) : undefined,
                     purpose: "Marriage Certificate",
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -537,7 +575,7 @@ export default function Marriage() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -560,7 +598,7 @@ export default function Marriage() {
                         ]}
                       >
                         <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                          {"         "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`MR. ${selectedResident.Firstname} ${

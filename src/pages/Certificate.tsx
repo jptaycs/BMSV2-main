@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { BaseDirectory, writeFile } from "@tauri-apps/plugin-fs";
-import { pdf } from "@react-pdf/renderer";
-import { CertificatePDF } from "@/components/pdf/certificatepdf";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -205,16 +203,23 @@ export default function Certificate() {
           value={totalCertificates}
           icon={<FileText size={50} />}
           onClick={async () => {
-            const blob = await pdf(
-              <CertificatePDF filter="All Certificates" certificates={data} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
+            const header = "ID,Issued To,Type,Purpose,Issued Date,Expires On\n";
+
+            const rows = data.map((c) => {
+              const issued = new Date(c.issued_date).toISOString().slice(0,10);
+              const expiryDate = new Date(c.issued_date);
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              const expires = expiryDate.toISOString().slice(0,10);
+              return `${c.id},${c.name},${c.type_},${c.purpose ?? ""},${issued},${expires}`;
+            }).join("\n");
+
+            const csv = header + rows;
+            const contents = new TextEncoder().encode(csv);
             try {
-              await writeFile("CertificateRecords.pdf", contents, {
+              await writeFile("CertificateRecords.csv", contents, {
                 baseDir: BaseDirectory.Document,
               });
-              toast.success("Certificate Record successfully downloaded", {
+              toast.success("Certificate Record CSV downloaded", {
                 description: "Saved in Documents folder",
               });
             } catch (e) {
@@ -229,16 +234,23 @@ export default function Certificate() {
           value={issuedTodayCertificates.length}
           icon={<CheckCircle size={50} />}
           onClick={async () => {
-            const blob = await pdf(
-              <CertificatePDF filter="Issued Certificates Today" certificates={issuedTodayCertificates} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
+            const header = "ID,Issued To,Type,Purpose,Issued Date,Expires On\n";
+
+            const rows = issuedTodayCertificates.map((c) => {
+              const issued = new Date(c.issued_date).toISOString().slice(0,10);
+              const expiryDate = new Date(c.issued_date);
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              const expires = expiryDate.toISOString().slice(0,10);
+              return `${c.id},${c.name},${c.type_},${c.purpose ?? ""},${issued},${expires}`;
+            }).join("\n");
+
+            const csv = header + rows;
+            const contents = new TextEncoder().encode(csv);
             try {
-              await writeFile("IssuedTodayCertificates.pdf", contents, {
+              await writeFile("IssuedTodayCertificates.csv", contents, {
                 baseDir: BaseDirectory.Document,
               });
-              toast.success("Issued Today Certificate Record successfully downloaded", {
+              toast.success("Issued Today Certificate Record CSV downloaded", {
                 description: "Saved in Documents folder",
               });
             } catch (e) {
@@ -258,16 +270,24 @@ export default function Certificate() {
               expiry.setFullYear(expiry.getFullYear() + 1);
               return new Date() <= expiry;
             });
-            const blob = await pdf(
-              <CertificatePDF filter="Active Certificates" certificates={activeCerts} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
+
+            const header = "ID,Issued To,Type,Purpose,Issued Date,Expires On\n";
+
+            const rows = activeCerts.map((c) => {
+              const issued = new Date(c.issued_date).toISOString().slice(0,10);
+              const expiryDate = new Date(c.issued_date);
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              const expires = expiryDate.toISOString().slice(0,10);
+              return `${c.id},${c.name},${c.type_},${c.purpose ?? ""},${issued},${expires}`;
+            }).join("\n");
+
+            const csv = header + rows;
+            const contents = new TextEncoder().encode(csv);
             try {
-              await writeFile("ActiveCertificateRecords.pdf", contents, {
+              await writeFile("ActiveCertificateRecords.csv", contents, {
                 baseDir: BaseDirectory.Document,
               });
-              toast.success("Active Certificate Record successfully downloaded", {
+              toast.success("Active Certificate Record CSV downloaded", {
                 description: "Saved in Documents folder",
               });
             } catch (e) {
@@ -287,16 +307,24 @@ export default function Certificate() {
               expiry.setFullYear(expiry.getFullYear() + 1);
               return new Date() > expiry;
             });
-            const blob = await pdf(
-              <CertificatePDF filter="Expired Certificates" certificates={expiredCerts} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
+
+            const header = "ID,Issued To,Type,Purpose,Issued Date,Expires On\n";
+
+            const rows = expiredCerts.map((c) => {
+              const issued = new Date(c.issued_date).toISOString().slice(0,10);
+              const expiryDate = new Date(c.issued_date);
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              const expires = expiryDate.toISOString().slice(0,10);
+              return `${c.id},${c.name},${c.type_},${c.purpose ?? ""},${issued},${expires}`;
+            }).join("\n");
+
+            const csv = header + rows;
+            const contents = new TextEncoder().encode(csv);
             try {
-              await writeFile("ExpiredCertificateRecords.pdf", contents, {
+              await writeFile("ExpiredCertificateRecords.csv", contents, {
                 baseDir: BaseDirectory.Document,
               });
-              toast.success("Expired Certificate Record successfully downloaded", {
+              toast.success("Expired Certificate Record CSV downloaded", {
                 description: "Saved in Documents folder",
               });
             } catch (e) {

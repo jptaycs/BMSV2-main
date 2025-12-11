@@ -26,12 +26,12 @@ type Certificate = {
 
 const data: Certificate[] = [
   { type: "4PS Certificate", path: "fourps" }, // done
-  { type: "Barangay Residency Certificate", path: "brgy-residency" }, // done
-  { type: "Barangay Clearance Certificate", path: "brgy-clearance" }, // done
-  { type: "Barangay Indigency Certificate", path: "brgy-indigency" }, // done
-  { type: "Barangay Business Permit", path: "brgy-business-permit" }, // done
-  { type: "Barangay Business Clearance", path: "brgy-business-clearance" }, // done
-  { type: "Barangay Protection Order", path: "cert-protection" }, // done
+  { type: "Residency Certificate", path: "brgy-residency" }, // done
+  { type: "Clearance Certificate", path: "brgy-clearance" }, // done
+  { type: "Indigency Certificate", path: "brgy-indigency" }, // done
+  { type: "Business Permit", path: "brgy-business-permit" }, // done
+  { type: "Business Clearance", path: "brgy-business-clearance" }, // done
+  { type: "Protection Order", path: "cert-protection" }, // done
   { type: "Marriage Certificate", path: "cert-marriage" }, // done
   { type: "Ownership Certificate", path: "cert-ownership" }, // done
   { type: "Registration of Birth", path: "registration-birth" }, // done

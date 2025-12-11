@@ -17,10 +17,8 @@ import searchBlotter from "@/service/blotter/searchBlotter";
 import { useDeleteBlotter } from "@/features/api/blotter/useDeleteBlotter";
 import { useBlotter } from "@/features/api/blotter/useBlotter";
 import { toast } from "sonner";
-import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import SummaryCardBlotter from "@/components/summary-card/blotter";
-import { BlotterPDF } from "@/components/pdf/blotterpdf";
 import IssueBlotterModal from "@/features/blotter/issueTemplateModal";
 
 
@@ -137,6 +135,37 @@ export default function BlotterRecordPage() {
   }, [searchParams, blotter, searchQuery]);
   const [viewBlotterId, setViewBlotterId] = useState<number | null>(null);
 
+  const handleDownloadCSV = async (filename: string, data: Blotter[]) => {
+    const header = [
+      "ID,Type,ReportedBy,Involved,IncidentDate,Zone,Status"
+    ];
+
+    const rows = data.map((b) => {
+      const dateValue = typeof b.IncidentDate === "string"
+        ? b.IncidentDate
+        : new Date(b.IncidentDate).toISOString().slice(0, 10);
+
+      return [
+        b.ID,
+        b.Type,
+        b.ReportedBy,
+        b.Involved,
+        dateValue,
+        b.Zone,
+        b.Status,
+      ].join(",");
+    });
+
+    const csv = [...header, ...rows].join("\n");
+    const encoder = new TextEncoder();
+    const contents = encoder.encode(csv);
+    await writeFile(filename, contents, { baseDir: BaseDirectory.Document });
+
+    toast.success("Blotter CSV successfully downloaded", {
+      description: "Saved in Documents folder",
+    });
+  };
+
   return (
     <>
       <div className="flex flex-wrap gap-5 justify-around mb-5 mt-1">
@@ -145,23 +174,7 @@ export default function BlotterRecordPage() {
           value={total}
           icon={<Users size={50} />}
           onClick={async () => {
-            const blob = await pdf(
-              <BlotterPDF filter="All Blotters" blotters={blotter} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("BlotterRecords.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("BlotterRecords.csv", blotter);
           }}
         />
         <SummaryCardBlotter
@@ -170,23 +183,7 @@ export default function BlotterRecordPage() {
           icon={<BookOpenCheck size={50} />}
           onClick={async () => {
             const filtered = blotter.filter((d) => d.Status === "Finished");
-            const blob = await pdf(
-              <BlotterPDF filter="Finished Blotters" blotters={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("FinishedBlotters.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("FinishedBlotters.csv", filtered);
           }}
         />
         <SummaryCardBlotter
@@ -195,23 +192,7 @@ export default function BlotterRecordPage() {
           icon={<Eye size={50} />}
           onClick={async () => {
             const filtered = blotter.filter((d) => d.Status === "Active");
-            const blob = await pdf(
-              <BlotterPDF filter="Active Blotters" blotters={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("ActiveBlotters.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("ActiveBlotters.csv", filtered);
           }}
         />
         <SummaryCardBlotter
@@ -220,23 +201,7 @@ export default function BlotterRecordPage() {
           icon={<Loader size={50} />}
           onClick={async () => {
             const filtered = blotter.filter((d) => d.Status === "On Going");
-            const blob = await pdf(
-              <BlotterPDF filter="On Going Blotters" blotters={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("OngoingBlotters.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("OngoingBlotters.csv", filtered);
           }}
         />
         <SummaryCardBlotter
@@ -245,23 +210,7 @@ export default function BlotterRecordPage() {
           icon={<Gavel size={50} />}
           onClick={async () => {
             const filtered = blotter.filter((d) => d.Status === "Closed");
-            const blob = await pdf(
-              <BlotterPDF filter="Closed Blotters" blotters={filtered} />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("ClosedBlotters.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("ClosedBlotters.csv", filtered);
           }}
         />
         <SummaryCardBlotter
@@ -272,26 +221,7 @@ export default function BlotterRecordPage() {
             const filtered = blotter.filter(
               (d) => d.Status === "Transferred to Police"
             );
-            const blob = await pdf(
-              <BlotterPDF
-                filter="Blotters that are transferred to police"
-                blotters={filtered}
-              />
-            ).toBlob();
-            const buffer = await blob.arrayBuffer();
-            const contents = new Uint8Array(buffer);
-            try {
-              await writeFile("TransferredBlotters.pdf", contents, {
-                baseDir: BaseDirectory.Document,
-              });
-              toast.success("Blotter Record successfully downloaded", {
-                description: "Blotter record is saved in Documents folder",
-              });
-            } catch (e) {
-              toast.error("Error", {
-                description: "Failed to save the Blotter record",
-              });
-            }
+            await handleDownloadCSV("TransferredBlotters.csv", filtered);
           }}
         />
       </div>

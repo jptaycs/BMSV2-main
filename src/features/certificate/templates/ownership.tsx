@@ -60,6 +60,8 @@ export default function Fourps() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [age, setAge] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
+  const [orNumber, setOrNumber] = useState("");
+  const [amount, setAmount] = useState("");
   // const [captainName, setCaptainName] = useState<string | null>(null);
   const allResidents = useMemo(() => {
     return residents.map((res) => ({
@@ -297,6 +299,34 @@ export default function Fourps() {
                 />
               </div>
               <div className="mt-4">
+                <label htmlFor="orNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  O.R. Number
+                </label>
+                <input
+                  id="orNumber"
+                  type="text"
+                  value={orNumber}
+                  onChange={(e) => setOrNumber(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter O.R. Number"
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount
+                </label>
+                <input
+                  id="amount"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter Amount"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="mt-4">
                 <label
                   htmlFor="age"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -427,13 +457,15 @@ export default function Fourps() {
                         : ""
                     }${selectedResident.Lastname}`,
                     type_: "Ownership Certificate",
-                    issued_date: new Date().toISOString(),
+                    issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: ownershipText,
                     civil_status: civilStatus || "",
                     purpose:
                       purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
                     prepared_by: preparedBy,
+                    or_number: orNumber,
+                    amount: amount ? parseFloat(amount) : undefined,
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
@@ -464,7 +496,7 @@ export default function Fourps() {
                       textAlign: "center",
                       fontWeight: "bold",
                       fontSize: 24,
-                      marginBottom: 10,
+                      marginBottom: 50,
                       fontFamily: "Times-Roman",
                     }}
                   >
@@ -486,8 +518,8 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{ fontWeight: "bold" }}>
-                          This is to certify that{" "}
+                        <Text style={{  }}>
+                         {"         "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {`${selectedResident.Firstname} ${
@@ -519,7 +551,7 @@ export default function Fourps() {
                           { textAlign: "justify", marginTop: 10 },
                         ]}
                       >
-                        This certification is being issued upon request of the
+                        {"         "}This certification is being issued upon request of the
                         interested party for record and reference purposes only.
                       </Text>
                       <Text
