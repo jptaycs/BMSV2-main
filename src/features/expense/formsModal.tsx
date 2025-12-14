@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,6 +48,8 @@ const financeForms: FinanceForm[] = [
 ];
 
 export default function FormsModal() {
+  const [search, setSearch] = useState("");
+  const [filteredForms, setFilteredForms] = useState<FinanceForm[]>(financeForms);
 
   return (
     <>
@@ -57,7 +60,7 @@ export default function FormsModal() {
             Finance Form
           </Button>
         </DialogTrigger>
-        <DialogContent className="py-5 px-0 flex flex-col gap-0 max-h-[30rem] overflow-hidden">
+        <DialogContent className="py-5 px-0 flex flex-col gap-0 max-h-[50rem] overflow-hidden">
           <div className="sticky top-0 z-10 p-6 border-b bg-background">
             <DialogHeader>
               <DialogTitle className="text-black">
@@ -67,6 +70,22 @@ export default function FormsModal() {
                 Please choose the finance form you'd like to generate. This helps us provide the correct template for your needs.
               </DialogDescription>
             </DialogHeader>
+            <div className="mb-0 mt-4">
+              <input
+                type="text"
+                placeholder="Search finance forms..."
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+                onChange={(e) => {
+                  // this will be handled via state in code (add state for search term)
+                  const searchTerm = e.target.value.toLowerCase();
+                  setFilteredForms(
+                    financeForms.filter((form) =>
+                      form.type.toLowerCase().includes(searchTerm)
+                    )
+                  );
+                }}
+              />
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             <div className="px-6">
@@ -80,7 +99,7 @@ export default function FormsModal() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {financeForms.map((form, i) => (
+                  {filteredForms.map((form, i) => (
                     <TableRow key={i} className="text-black">
                       <TableCell>
                         <div className="flex justify-between items-center">

@@ -31,7 +31,7 @@ import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -199,11 +199,16 @@ export default function Indigency() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Indigency Certificate
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
               Please fill out the necessary information needed for Indigency
@@ -725,20 +730,11 @@ export default function Indigency() {
                           return renderWithDependent(customBody);
                         })()}
                       </Text>
-                      <Text
-                        style={[
-                          styles.bodyText,
-                          { marginTop: 10, marginBottom: 8 },
-                        ]}
-                      >
-                        {purpose || customPurpose
-                          ? `Purpose: ${
-                              purpose === "custom"
-                                ? customPurpose || "________________"
-                                : purpose
-                            }`
-                          : ""}
-                      </Text>
+                      {( (purpose && purpose !== "") || (purpose === "custom" && customPurpose && customPurpose !== "") ) ? (
+                        <Text style={[styles.bodyText, { marginTop: 10, marginBottom: 8 }]}>
+                          Purpose: {purpose === "custom" ? customPurpose : purpose}
+                        </Text>
+                      ) : null}
                       <Text
                         style={[
                           styles.bodyText,
