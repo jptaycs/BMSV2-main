@@ -19,7 +19,7 @@ import {
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { ArrowLeftCircleIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import {
   Select,
@@ -43,14 +43,33 @@ export default function Completion() {
     useState("administration");
   const [notedBy, setNotedBy] = useState("ALVIN C. FEDERICO");
   const [notedByRole, setNotedByRole] = useState("Municipal Engineer");
-  const [acceptedBy, setAcceptedBy] = useState("VERGEL S. BORDON");
-  const [acceptedByRole, setAcceptedByRole] = useState("Barangay Captain");
+  const { data: officials } = useOfficial();
+  const getOfficialName = (role: string, section: string) => {
+    if (!officials) return null;
+    const list = Array.isArray(officials) ? officials : officials.officials;
+    const found = list.find(
+      (o) =>
+        (o.Section?.toLowerCase() || "").includes(section.toLowerCase()) &&
+        (o.Role?.toLowerCase() || "").includes(role.toLowerCase())
+    );
+    return found ?? null;
+  };
+
+  const [acceptedBy, setAcceptedBy] = useState<string | null>(null);
+  const [acceptedByRole, setAcceptedByRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const captain = getOfficialName("barangay captain", "barangay officials");
+    if (captain) {
+      setAcceptedBy(captain.Name);
+      setAcceptedByRole(captain.Role);
+    }
+  }, [officials]);
 
   const [openCalendarFrom, setOpenCalendarFrom] = useState(false);
   const [openCalendarTo, setOpenCalendarTo] = useState(false);
   const [openCalendarCompletion, setOpenCalendarCompletion] = useState(false);
 
-  const { data: officials } = useOfficial();
 
   const filteredOfficials = useMemo(() => {
     if (!officials) return [];
@@ -282,7 +301,7 @@ export default function Completion() {
                   Accepted by (Barangay Captain)
                 </label>
                 <Select
-                  value={`${acceptedBy}::${acceptedByRole}`}
+                  value={acceptedBy && acceptedByRole ? `${acceptedBy}::${acceptedByRole}` : ""}
                   onValueChange={(value) => {
                     const [name, role] = value.split("::");
                     setAcceptedBy(name);
