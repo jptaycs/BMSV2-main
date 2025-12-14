@@ -76,6 +76,19 @@ export default function YouthPage() {
   } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const [dialogSearch,] = useState("");
+
+  // Filtered youths inside the dialog by dialogSearch
+  const dialogFilteredYouths = useMemo(() => {
+    if (!pendingDownload) return [];
+    if (!dialogSearch.trim()) return pendingDownload.filteredYouths;
+    const searchLower = dialogSearch.toLowerCase();
+    return pendingDownload.filteredYouths.filter((y) => {
+      const fullName = `${y.Lastname}, ${y.Firstname} ${y.Middlename ?? ""} ${y.Suffix ?? ""}`.toLowerCase();
+      return fullName.includes(searchLower);
+    });
+  }, [pendingDownload, dialogSearch]);
+
   const handleSortChange = (sortValue: string) => {
     searchParams.set("sort", sortValue);
     setSearchParams(searchParams);
@@ -149,9 +162,9 @@ export default function YouthPage() {
 
   const confirmDownload = () => {
     if (!pendingDownload) return;
-    const { filename, filter, filteredYouths } = pendingDownload;
+    const { filename, filter } = pendingDownload;
     setPendingDownload(null);
-    startDownload(filename, filter, filteredYouths);
+    startDownload(filename, filter, dialogFilteredYouths);
   };
 
   const cancelDownload = () => setPendingDownload(null);
@@ -343,7 +356,9 @@ export default function YouthPage() {
 
       {pendingDownload && (
         <Dialog open={true} onOpenChange={cancelDownload}>
-          <DialogContent>
+          <DialogContent className="max-h-[70vh] overflow-auto">
+            <div className="mb-4">
+            </div>
             <DialogHeader>
               <DialogTitle className="text-black">Confirm Download</DialogTitle>
               <DialogDescription>
