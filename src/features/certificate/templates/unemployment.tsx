@@ -36,11 +36,11 @@ import {
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { Buffer } from "buffer";
 import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -57,7 +57,6 @@ type Resident = {
 };
 
 export default function Unemployment() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

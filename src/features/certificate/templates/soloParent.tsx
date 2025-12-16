@@ -25,7 +25,6 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -43,6 +42,7 @@ import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -61,8 +61,6 @@ type Resident = {
 
 export default function soloParent() {
   const { data: officials } = useOfficial();
-  const navigate = useNavigate();
-
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

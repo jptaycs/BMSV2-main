@@ -31,7 +31,6 @@ import { useAddCertificate } from "@/features/api/certificate/useAddCertificate"
 import CertificateHeader from "../certificateHeader";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import CertificateFooter from "../certificateFooter";
 import {
@@ -41,6 +40,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -57,7 +57,6 @@ type Resident = {
 };
 
 export default function BusinessClearance() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

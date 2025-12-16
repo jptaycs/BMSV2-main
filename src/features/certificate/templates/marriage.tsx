@@ -25,7 +25,6 @@ import { useEffect } from "react";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
@@ -41,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Buffer } from "buffer";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -59,7 +59,6 @@ type Resident = {
 export default function Marriage() {
   const [orNumber, setOrNumber] = useState("");
   const [amount, setAmount] = useState("");
-  const navigate = useNavigate();
   const [openMale, setOpenMale] = useState(false);
   const [openFemale, setOpenFemale] = useState(false);
   const [value, setValue] = useState("");

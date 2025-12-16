@@ -30,7 +30,6 @@ import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { NavLink, useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeftCircleIcon, ChevronsUpDown, Check } from "lucide-react";
 import CertificateFooter from "../certificateFooter";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -61,7 +61,6 @@ export default function Jobseeker() {
   const [residencyYear, setResidencyYear] = useState("");
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

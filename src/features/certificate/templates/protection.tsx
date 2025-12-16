@@ -27,7 +27,6 @@ import { ArrowLeftCircleIcon, Check, ChevronsUpDown, CalendarIcon } from "lucide
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -41,6 +40,7 @@ import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
+import { NavLink } from "react-router-dom";
 
 type Resident = {
   ID?: number;
@@ -54,7 +54,6 @@ type Resident = {
 };
 
 export default function BarangayProtectionOrder() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

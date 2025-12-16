@@ -31,7 +31,6 @@ import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -42,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeftCircleIcon, ChevronsUpDown, Check } from "lucide-react";
 import CertificateFooter from "../certificateFooter";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -76,7 +76,6 @@ export default function Indigency() {
     month: "long",
     year: "numeric",
   });
-  const navigate = useNavigate();
   const [residentOpen, setResidentOpen] = useState(false);
   const [dependentOpen, setDependentOpen] = useState(false);
   const [value, setValue] = useState("");

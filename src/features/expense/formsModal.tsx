@@ -48,7 +48,6 @@ const financeForms: FinanceForm[] = [
 ];
 
 export default function FormsModal() {
-  const [search, setSearch] = useState("");
   const [filteredForms, setFilteredForms] = useState<FinanceForm[]>(financeForms);
 
   return (

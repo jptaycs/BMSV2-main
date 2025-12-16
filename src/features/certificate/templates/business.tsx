@@ -29,7 +29,6 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Buffer } from "buffer";
@@ -46,6 +45,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -63,7 +63,6 @@ type Resident = {
 
 export default function BusinessPermit() {
   const { data: officials } = useOfficial();
-  const navigate = useNavigate();
   const [residents, setResidents] = useState<Resident[]>([]);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");

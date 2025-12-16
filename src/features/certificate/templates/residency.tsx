@@ -27,7 +27,6 @@ import { useEffect } from "react";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useOfficial } from "@/features/api/official/useOfficial";
-import { useNavigate, NavLink } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import getResident from "@/service/api/resident/getResident";
@@ -42,6 +41,7 @@ import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
 import getSettings from "@/service/api/settings/getSettings";
 import { Resident } from "@/types/apitypes";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -53,7 +53,6 @@ export default function Residency() {
   const [customPurpose, setCustomPurpose] = useState("");
   const [orNumber, setOrNumber] = useState("");
   const [amount, setAmount] = useState("");
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);

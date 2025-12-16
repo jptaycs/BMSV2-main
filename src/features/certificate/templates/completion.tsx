@@ -20,7 +20,6 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { ArrowLeftCircleIcon } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -30,9 +29,9 @@ import {
 } from "@/components/ui/select";
 import CertificateHeader from "../certificateHeader";
 import { useOfficial } from "@/features/api/official/useOfficial";
+import { NavLink } from "react-router-dom";
 
 export default function Completion() {
-  const navigate = useNavigate();
   // State for new fields
   const [projectDescription, setProjectDescription] = useState("");
   const [location, setLocation] = useState("");

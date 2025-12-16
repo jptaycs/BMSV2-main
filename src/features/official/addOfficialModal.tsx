@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useEffect, useMemo } from "react";
@@ -30,8 +29,6 @@ import {
 } from "@/components/ui/popover";
 import { Command, CommandInput, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { Virtuoso } from "react-virtuoso";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
   SelectContent,
@@ -42,14 +39,12 @@ import {
 import { Official, Resident } from "@/types/apitypes";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAddOfficial } from "../api/official/useAddOfficial";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorResponse } from "@/service/api/auth/login";
 import getResident from "@/service/api/resident/getResident";
 
 export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
-  const [openCalendarTermStart, setOpenCalendarTermStart] = useState(false);
-  const [openCalendarTermEnd, setOpenCalendarTermEnd] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [, setImagePreview] = useState("");
 

@@ -35,7 +35,6 @@ import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { toast } from "sonner";
 import { ArrowLeftCircleIcon, ChevronsUpDown, Check } from "lucide-react";
@@ -44,6 +43,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import CertificateHeader from "../certificateHeader";
 import { Buffer } from "buffer";
+import { NavLink } from "react-router-dom";
 if (!window.Buffer) {
   window.Buffer = Buffer;
 }
@@ -74,7 +74,6 @@ export default function Birth() {
   const captainName = getOfficialName("barangay captain", "barangay officials");
   const preparedByDefault = getOfficialName("secretary", "barangay officials");
   const [preparedBy, setPreparedBy] = useState(preparedByDefault || "");
-  const navigate = useNavigate();
   // Birth certificate form fields
   const [registryNo, setRegistryNo] = useState("");
   const [birthDate, setBirthDate] = useState("");
