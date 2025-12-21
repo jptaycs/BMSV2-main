@@ -65,36 +65,36 @@ export const programProjectSchema = z.object({
 })
 
 export const residentSchema = z.object({
-  Firstname: z.string().min(1).optional(),
+  Firstname: z.string().optional(),
   Middlename: z.string().nullable().optional(),
-  Lastname: z.string().min(1).optional(),
+  Lastname: z.string().optional(),
   Suffix: z.string().nullable().optional(),
-  CivilStatus: z.string().min(1).optional(),
-  Gender: z.union([z.enum(["Male", "Female"]),
-        z.literal("")
-  ]).optional(),
-  Nationality: z.string().min(1).optional(),
-  Occupation: z.string().min(1).optional(),
-  MobileNumber: z.string().regex(/^09\d{9}$/, "Invalid mobile number").nullable().optional(),
-  Birthday: z.coerce.date({ required_error: "Birthday required" }).optional(),
+  CivilStatus: z.string().optional(),
+  Gender: z.union([z.enum(["Male", "Female"]), z.literal("")]).optional(),
+  Nationality: z.string().optional(),
+  Occupation: z.string().optional(),
+  MobileNumber: z.string().optional().nullable().refine(val => {
+    if (!val) return true; // allow empty or null
+    return /^09\d{9}$/.test(val);
+  }, {
+    message: "Invalid mobile number",
+  }),
+  Birthday: z.coerce.date().optional(),
   Birthplace: z.string().nullable().optional(),
   Zone: z.coerce.number().optional(),
-  EducationalAttainment: z.string().min(1).optional(),
-  Religion: z.string().min(1).optional(),
-  Barangay: z.string().min(1).optional(),
-  Town: z.string().min(1).optional(),
-  Province: z.string().min(1).optional(),
-  Status: z.union([
-    z.enum(["Active", "Dead", "Missing", "Moved Out"]),
-    z.literal("")
-  ]).optional(),
+  EducationalAttainment: z.string().optional(),
+  Religion: z.string().optional(),
+  Barangay: z.string().optional(),
+  Town: z.string().optional(),
+  Province: z.string().optional(),
+  Status: z.union([z.enum(["Active", "Dead", "Missing", "Moved Out"]), z.literal("")]).optional(),
   Image: z.instanceof(File).optional().nullable(),
   IsVoter: z.coerce.boolean().default(false),
   IsPWD: z.coerce.boolean().default(false),
   IsSolo: z.coerce.boolean().default(false),
   IsSenior: z.coerce.boolean().default(false),
-  AvgIncome: z.coerce.number()
-}).optional();
+  AvgIncome: z.coerce.number().optional(),
+});
 
 export const householdSchema = z.object({
   HouseholdNumber: z.string().min(1, { message: "Household number is required" }),

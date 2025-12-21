@@ -71,34 +71,34 @@ export default function AddResidentModal() {
   const [, setSettings] = useState<Settings | null>(null);
   
   const form = useForm<z.infer<typeof residentSchema>>({
-    resolver: zodResolver(residentSchema),
-    defaultValues: {
-      Firstname: "",
-      Middlename: "",
-      Lastname: "",
-      Suffix: "",
-      CivilStatus: "",
-      Status: "Active",
-      Gender: "",
-      MobileNumber: "",
-      Birthday: new Date(),
-      Birthplace: "",
-      Nationality: "",
-      Zone: 0,
-      EducationalAttainment: "",
-      Barangay: "",
-      Town: "",
-      Province: "",
-      Image: null,
-      IsVoter: false,
-      IsPWD: false,
-      IsSolo: false,
-      IsSenior: false,
-      Occupation: "",
-      Religion: "",
-      AvgIncome: 0,
-    },
-  });
+  resolver: zodResolver(residentSchema),
+  defaultValues: {
+    Firstname: "",
+    Middlename: "",
+    Lastname: "",
+    Suffix: "",
+    CivilStatus: "",
+    Status: "Active",
+    Gender: "",
+    MobileNumber: "",
+    Birthday: undefined,
+    Birthplace: "",
+    Nationality: "",
+    Zone: undefined,
+    EducationalAttainment: "",
+    Barangay: "",
+    Town: "",
+    Province: "",
+    Image: null,
+    IsVoter: false,
+    IsPWD: false,
+    IsSolo: false,
+    IsSenior: false,
+    Occupation: "",
+    Religion: "",
+    AvgIncome: undefined,
+  },
+});
 
   useEffect(() => {
     async function fetchSettings() {
@@ -125,53 +125,50 @@ export default function AddResidentModal() {
   const queryClient = useQueryClient();
 
   const onSubmit = async (values: z.infer<typeof residentSchema>) => {
-    toast.promise(
-      addMutation.mutateAsync({
-        Firstname: values.Firstname,
-        Middlename: values.Middlename,
-        Lastname: values.Lastname,
-        CivilStatus: values.CivilStatus,
-        Gender: values.Gender,
-        Nationality: values.Nationality,
-        Religion: values.Religion,
-        Status: values.Status,
-        Birthplace: values.Birthplace,
-        EducationalAttainment: values.EducationalAttainment,
-        Birthday: new Date(values.Birthday.toISOString().split("T")[0]),
-        IsVoter: values.IsVoter,
-        IsPWD: values.IsPWD,
-        Image: null,
-        Zone: Number(values.Zone),
-        Barangay: values.Barangay,
-        Town: values.Town,
-        Province: values.Province,
-        Suffix: values.Suffix,
-        Occupation: values.Occupation,
-        AvgIncome: values.AvgIncome,
-        MobileNumber: values.MobileNumber,
-        IsSolo: values.IsSolo,
-        IsSenior: values.IsSenior,
+  toast.promise(
+    addMutation.mutateAsync({
+      Firstname: values.Firstname,
+      Middlename: values.Middlename,
+      Lastname: values.Lastname,
+      CivilStatus: values.CivilStatus,
+      Gender: values.Gender,
+      Nationality: values.Nationality,
+      Religion: values.Religion,
+      Status: values.Status,
+      Birthplace: values.Birthplace,
+      EducationalAttainment: values.EducationalAttainment,
+      Birthday: values.Birthday ? new Date(values.Birthday.toISOString().split("T")[0]) : undefined,
+      IsVoter: values.IsVoter,
+      IsPWD: values.IsPWD,
+      Image: null,
+      Zone: values.Zone ? Number(values.Zone) : undefined,
+      Barangay: values.Barangay,
+      Town: values.Town,
+      Province: values.Province,
+      Suffix: values.Suffix,
+      Occupation: values.Occupation,
+      AvgIncome: values.AvgIncome,
+      MobileNumber: values.MobileNumber,
+      IsSolo: values.IsSolo,
+      IsSenior: values.IsSenior,
+    }),
+    {
+      loading: "Adding Resident please wait...",
+      success: (data) => {
+        queryClient.invalidateQueries({ queryKey: ["residents"] });
+        setOpenModal(false);
+        return {
+          message: "Resident Added successfully",
+          description: `${data.resident.Firstname} ${data.resident.Lastname} was added`,
+        };
+      },
+      error: (error) => ({
+        message: "Adding resident failed",
+        description: `${error.error}`,
       }),
-      {
-        loading: "Adding Resident please wait...",
-        success: (data) => {
-          const r = data.resident;
-          queryClient.invalidateQueries({ queryKey: ["residents"] });
-          setOpenModal(false);
-          return {
-            message: "Resident Added successfully",
-            description: `${r.Firstname} ${r.Lastname} was added`,
-          };
-        },
-        error: (error: ErrorResponse) => {
-          return {
-            message: "Adding resident failed",
-            description: `${error.error}`,
-          };
-        },
-      }
-    );
-  };
+    }
+  );
+};
 
   return (
     <Dialog open={openModal} onOpenChange={setOpenModal}>
@@ -238,7 +235,6 @@ export default function AddResidentModal() {
                               id="first_name"
                               type="text"
                               placeholder="Enter first name"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -260,7 +256,6 @@ export default function AddResidentModal() {
                               id="middle_name"
                               type="text"
                               placeholder="Enter middle name"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -282,7 +277,6 @@ export default function AddResidentModal() {
                               id="last_name"
                               type="text"
                               placeholder="Enter last name"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -391,7 +385,6 @@ export default function AddResidentModal() {
                               id="nationality"
                               type="text"
                               placeholder="Enter nationality"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -416,7 +409,6 @@ export default function AddResidentModal() {
                                 id="mobileNumber"
                                 type="text"
                                 placeholder="Enter mobile number"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -648,7 +640,6 @@ export default function AddResidentModal() {
                               id="townOfBirth"
                               type="text"
                               placeholder="Enter town/city of birth"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -709,7 +700,6 @@ export default function AddResidentModal() {
                               id="Barangay"
                               type="text"
                               placeholder="Enter present barangay"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -730,7 +720,6 @@ export default function AddResidentModal() {
                               id="Town"
                               type="text"
                               placeholder="Enter present town"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -751,7 +740,6 @@ export default function AddResidentModal() {
                               id="Province"
                               type="text"
                               placeholder="Enter present province"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -777,7 +765,6 @@ export default function AddResidentModal() {
                               id="Occupation"
                               type="text"
                               placeholder="Enter Occupation"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -798,7 +785,6 @@ export default function AddResidentModal() {
                               id="AvgIncome"
                               type="number"
                               placeholder="Enter Estimated Income"
-                              required
                               {...field}
                               className="text-black"
                             />
