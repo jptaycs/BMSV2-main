@@ -684,7 +684,7 @@ export default function AddResidentModal() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {["1", "2", "3", "4", "5", "6", "7", "8"].map(
+                              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"].map(
                                 (option, i) => (
                                   <SelectItem value={option} key={i}>
                                     {option}
