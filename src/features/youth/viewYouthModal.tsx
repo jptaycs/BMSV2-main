@@ -233,7 +233,6 @@ export default function ViewYouthModal({
                                 id="first_name"
                                 type="text"
                                 placeholder="Enter first name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -254,7 +253,6 @@ export default function ViewYouthModal({
                                 id="middle_name"
                                 type="text"
                                 placeholder="Enter middle name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -275,7 +273,6 @@ export default function ViewYouthModal({
                                 id="last_name"
                                 type="text"
                                 placeholder="Enter last name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
