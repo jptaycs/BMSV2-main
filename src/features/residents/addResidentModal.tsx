@@ -37,7 +37,6 @@ import { useEffect, useState } from "react";
 import { useAddResident } from "../api/resident/useAddResident";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { ErrorResponse } from "@/service/api/auth/login";
 import { residentSchema } from "@/types/formSchema";
 import getSettings from "@/service/api/settings/getSettings";
 import { Settings } from "@/types/apitypes";
