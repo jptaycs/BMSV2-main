@@ -76,30 +76,30 @@ export default function ViewResidentModal({
   const form = useForm<z.infer<typeof residentSchema>>({
     resolver: zodResolver(residentSchema),
     defaultValues: {
-      Firstname: resident.Firstname,
+      Firstname: resident.Firstname || "",
       Middlename: resident.Middlename || "",
-      Lastname: resident.Lastname,
-      CivilStatus: resident.CivilStatus,
-      Gender: resident.Gender,
-      Nationality: resident.Nationality,
-      Religion: resident.Religion,
-      Status: resident.Status,
-      Birthplace: resident.Birthplace,
-      EducationalAttainment: resident.EducationalAttainment,
-      Birthday: resident.Birthday,
-      IsVoter: resident.IsVoter,
-      IsPWD: resident.IsPWD,
+      Lastname: resident.Lastname || "",
+      CivilStatus: resident.CivilStatus || "",
+      Gender: resident.Gender || "",
+      Nationality: resident.Nationality || "",
+      Religion: resident.Religion || "",
+      Status: resident.Status || "",
+      Birthplace: resident.Birthplace || "",
+      EducationalAttainment: resident.EducationalAttainment || "",
+      Birthday: resident.Birthday || null,
+      IsVoter: resident.IsVoter || false,
+      IsPWD: resident.IsPWD || false,
       Image: null,
       Zone: resident.Zone ?? 0,
-      Barangay: resident.Barangay,
-      Town: resident.Town,
-      Province: resident.Province,
-      Suffix: resident.Suffix,
-      Occupation: resident.Occupation,
-      AvgIncome: resident.AvgIncome,
-      MobileNumber: resident.MobileNumber,
-      IsSolo: resident.IsSolo,
-      IsSenior: resident.IsSenior,
+      Barangay: resident.Barangay || "",
+      Town: resident.Town || "",
+      Province: resident.Province || "",
+      Suffix: resident.Suffix || "",
+      Occupation: resident.Occupation || "",
+      AvgIncome: resident.AvgIncome || null,
+      MobileNumber: resident.MobileNumber || "",
+      IsSolo: resident.IsSolo || false,
+      IsSenior: resident.IsSenior || false,
     },
   });
   const editMutation = useEditResident();
@@ -139,14 +139,20 @@ export default function ViewResidentModal({
 
       if (!residentKey) return;
 
+      let valueToSet = formValue;
+
+      // Convert empty strings to null
+      if (typeof formValue === "string" && formValue.trim() === "") {
+        valueToSet = null;
+      }
+
       const residentValue = resident[residentKey];
 
-      if (formValue !== residentValue) {
-        // ✅ Special case for date_of_birth -> format as YYYY-MM-DD
+      if (valueToSet !== residentValue) {
         if (key === "Birthday" && formValue instanceof Date) {
-          updated[residentKey] = format(formValue, "yyyy-MM-dd"); // "2002-08-03"
+          updated[residentKey] = format(formValue, "yyyy-MM-dd");
         } else {
-          updated[residentKey] = formValue as any;
+          updated[residentKey] = valueToSet;
         }
       }
     });
@@ -239,7 +245,6 @@ export default function ViewResidentModal({
                                 id="first_name"
                                 type="text"
                                 placeholder="Enter first name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -261,7 +266,6 @@ export default function ViewResidentModal({
                                 id="middle_name"
                                 type="text"
                                 placeholder="Enter middle name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -283,7 +287,6 @@ export default function ViewResidentModal({
                                 id="last_name"
                                 type="text"
                                 placeholder="Enter last name"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -392,7 +395,6 @@ export default function ViewResidentModal({
                                 id="nationality"
                                 type="text"
                                 placeholder="Enter nationality"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -704,7 +706,6 @@ export default function ViewResidentModal({
                                 id="Barangay"
                                 type="text"
                                 placeholder="Enter present barangay"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -725,7 +726,6 @@ export default function ViewResidentModal({
                                 id="Town"
                                 type="text"
                                 placeholder="Enter present town"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -746,7 +746,6 @@ export default function ViewResidentModal({
                                 id="Province"
                                 type="text"
                                 placeholder="Enter present province"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -772,7 +771,6 @@ export default function ViewResidentModal({
                                 id="Occupation"
                                 type="text"
                                 placeholder="Enter Occupation"
-                                required
                                 {...field}
                                 className="text-black"
                               />
@@ -793,7 +791,6 @@ export default function ViewResidentModal({
                                 id="AvgIncome"
                                 type="number"
                                 placeholder="Enter Estimated Income"
-                                required
                                 {...field}
                                 className="text-black"
                               />

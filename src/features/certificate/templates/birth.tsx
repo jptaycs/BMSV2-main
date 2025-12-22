@@ -35,7 +35,6 @@ import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { toast } from "sonner";
 import { ArrowLeftCircleIcon, ChevronsUpDown, Check } from "lucide-react";
@@ -44,6 +43,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import CertificateHeader from "../certificateHeader";
 import { Buffer } from "buffer";
+import { NavLink } from "react-router-dom";
 if (!window.Buffer) {
   window.Buffer = Buffer;
 }
@@ -74,7 +74,6 @@ export default function Birth() {
   const captainName = getOfficialName("barangay captain", "barangay officials");
   const preparedByDefault = getOfficialName("secretary", "barangay officials");
   const [preparedBy, setPreparedBy] = useState(preparedByDefault || "");
-  const navigate = useNavigate();
   // Birth certificate form fields
   const [registryNo, setRegistryNo] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -197,11 +196,19 @@ export default function Birth() {
       <div className="flex gap-1 ">
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
+            <div className="flex justify-start mb-2">
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
+            </div>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
               Birth Certificate
             </CardTitle>
             <CardDescription className="text-start">

@@ -29,7 +29,6 @@ import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -42,13 +41,13 @@ import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
 import { Resident } from "@/types/apitypes";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
 }
 
 export default function Clearance() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -204,11 +203,16 @@ export default function Clearance() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Barangay Clearance
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
               Please fill out the necessary information needed for Barangay
