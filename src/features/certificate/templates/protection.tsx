@@ -58,12 +58,18 @@ export default function BarangayProtectionOrder() {
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   // const [captainName, setCaptainName] = useState<string | null>(null);
+  const [editableResidentName, setEditableResidentName] = useState("");
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.replace(/\s+/g, " ").trim();
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -189,10 +195,14 @@ export default function BarangayProtectionOrder() {
                                 value={res.value}
                                 className="text-black"
                                 onSelect={(currentValue) => {
-                                  setValue(
-                                    currentValue === value ? "" : currentValue
-                                  );
+                                  const selected = allResidents.find(res => res.value === currentValue);
+                                  setValue(currentValue === value ? "" : currentValue);
                                   setOpen(false);
+                                  if (selected) {
+                                    setEditableResidentName(selected.label);
+                                  } else {
+                                    setEditableResidentName("");
+                                  }
                                 }}
                               >
                                 {res.label}
@@ -213,6 +223,19 @@ export default function BarangayProtectionOrder() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-4">
+                <label htmlFor="editableResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editableResidentName"
+                  type="text"
+                  value={editableResidentName}
+                  onChange={(e) => setEditableResidentName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Edit full resident name"
+                />
+              </div>
               <div className="mt-4">
                 <label
                   htmlFor="respondentName"
@@ -440,11 +463,13 @@ export default function BarangayProtectionOrder() {
                 try {
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
+                    resident_name: editableResidentName.trim() || (selectedResident ? `${selectedResident.Firstname}${
                       selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
+                        ? " " + selectedResident.Middlename.charAt(0) + "."
                         : ""
-                    }${selectedResident.Lastname}`,
+                    } ${selectedResident.Lastname}${
+                      selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                    }`.replace(/\s+/g, " ").trim() : ""),
                     type_: "Barangay Protection Order",
                     issued_date: new Date().toISOString(),
                     respondent_name: respondentName,
@@ -457,11 +482,13 @@ export default function BarangayProtectionOrder() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
+                    description: `${selectedResident.Firstname}${
                       selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
+                        ? " " + selectedResident.Middlename.charAt(0) + "."
                         : ""
-                    }${selectedResident.Lastname}'s BPO was saved.`,
+                    } ${selectedResident.Lastname}${
+                      selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                    }'s BPO was saved.`.replace(/\s+/g, " ").trim(),
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -554,6 +581,13 @@ export default function BarangayProtectionOrder() {
                       </Text>
                       <View style={{ marginTop: 30 }}>
                         <Text style={{ fontSize: 18, textAlign: "right", fontWeight: "bold" }}>
+                          {`${selectedResident.Firstname}${
+                            selectedResident.Middlename ? ` ${selectedResident.Middlename.charAt(0)}.` : ""
+                          } ${selectedResident.Lastname}${
+                            selectedResident.Suffix ? ` ${selectedResident.Suffix}` : ""
+                          }`.toUpperCase()}
+                        </Text>
+                        <Text style={{ textAlign: "right", fontSize: 18 }}>
                           HON. {assignedOfficial || "________________"}
                         </Text>
                         <Text style={{ textAlign: "right", fontSize: 18 }}>
