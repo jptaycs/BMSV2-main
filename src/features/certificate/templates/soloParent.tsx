@@ -73,6 +73,7 @@ export default function soloParent() {
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
   const [assignedOfficial, setAssignedOfficial] = useState("");
+  const [editedResidentName, setEditedResidentName] = useState("");
 
   // logos are loaded like in Fourps, even if not used directly
   const [, setLogoDataUrl] = useState<string | null>(null);
@@ -102,19 +103,24 @@ export default function soloParent() {
     getOfficialName("secretary", "barangay officials") ?? ""
   );
 
-  /** Same resident picker logic as Fourps */
+  /** Same resident picker logic as Fourps, include middle initial and suffix */
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.first_name} ${res.last_name}`.toLowerCase(),
-      label: `${res.first_name} ${res.last_name}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.middle_name ? ` ${res.middle_name.charAt(0)}.` : "";
+      const suffix = res.suffix ? ` ${res.suffix}` : "";
+      const fullName = `${res.first_name}${middleInitial} ${res.last_name}${suffix}`.toLowerCase();
+      return {
+        value: fullName,
+        label: fullName.trim(),
+        data: res,
+      };
+    });
   }, [residents]);
 
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
     return allResidents.filter((res) =>
-      res.label.toLowerCase().includes(search.toLowerCase())
+      res.value.includes(search.toLowerCase())
     );
   }, [allResidents, search]);
 
@@ -246,6 +252,7 @@ export default function soloParent() {
                           totalCount={filteredResidents.length}
                           itemContent={(index) => {
                             const res = filteredResidents[index];
+                            // Display full name with middle initial and suffix
                             return (
                               <CommandItem
                                 key={res.value}
@@ -280,6 +287,12 @@ export default function soloParent() {
                                     setValue(
                                       currentValue === value ? "" : currentValue
                                     );
+                                    if (selected) {
+                                      const middleInitial = selected.middle_name ? ` ${selected.middle_name.charAt(0)}.` : "";
+                                      const suffix = selected.suffix ? ` ${selected.suffix}` : "";
+                                      const fullName = `${selected.first_name}${middleInitial} ${selected.last_name}${suffix}`.replace(/\s+/g, " ").trim();
+                                      setEditedResidentName(fullName);
+                                    }
                                   }
                                   setOpen(false);
                                 }}
@@ -302,6 +315,19 @@ export default function soloParent() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-2">
+                <label htmlFor="editedResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editedResidentName"
+                  type="text"
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={editedResidentName}
+                  onChange={(e) => setEditedResidentName(e.target.value)}
+                  placeholder="Edit resident name here"
+                />
+              </div>
               <div className="mt-4">
                 <label
                   htmlFor="soloParent"
@@ -508,11 +534,7 @@ export default function soloParent() {
                 try {
                   const cert: any = {
                     resident_id: selectedResident.id,
-                    resident_name: `${selectedResident.first_name} ${
-                      selectedResident.middle_name
-                        ? selectedResident.middle_name.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.last_name}`,
+                    resident_name: editedResidentName || `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name.charAt(0) + ". " : ""}${selectedResident.last_name}`.replace(/\s+/g, " ").trim(),
                     type_: "Solo Parent Certificate",
                     issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: "",
@@ -580,11 +602,7 @@ export default function soloParent() {
                          {"            "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
-                          {`${selectedResident.first_name} ${
-                            selectedResident.middle_name
-                              ? selectedResident.middle_name.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.last_name}`.toUpperCase()}
+                          {(editedResidentName || `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name.charAt(0) + ". " : ""}${selectedResident.last_name}`).toUpperCase()}
                         </Text>
                         <Text>
                           , {age || "___"} years old, {civilStatus || "___"}, a

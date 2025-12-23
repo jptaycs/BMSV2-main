@@ -101,11 +101,23 @@ export default function BusinessPermit() {
   });
 
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename
+        ? ` ${res.Middlename.charAt(0)}.`
+        : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.replace(
+        /\s+/g,
+        " "
+      );
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
 
   const filteredResidents = useMemo(() => {
@@ -471,7 +483,9 @@ export default function BusinessPermit() {
                     selectedResident.Middlename
                       ? selectedResident.Middlename.charAt(0) + ". "
                       : ""
-                  }${selectedResident.Lastname}`,
+                  }${selectedResident.Lastname}${
+                    selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                  }`,
                   type_: "Barangay Business Permit",
                   issued_date: formattedIssuedDate,
                   ownership_text: businessOwner || "",
@@ -487,7 +501,9 @@ export default function BusinessPermit() {
                     selectedResident.Middlename
                       ? selectedResident.Middlename.charAt(0) + ". "
                       : ""
-                  }${selectedResident.Lastname}'s certificate was saved.`,
+                  }${selectedResident.Lastname}${
+                    selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                  }'s certificate was saved.`,
                 });
               } catch (error) {
                 console.error("Save certificate failed:", error);
