@@ -57,8 +57,8 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
       Section: "",
       Age: undefined,
       Contact: "",
-      TermStart: undefined,
-      TermEnd: undefined,
+      TermStart: new Date(new Date().getFullYear() - 3, 10, 1),
+      TermEnd: new Date(new Date().getFullYear() + 1, 10, 1),
       Zone: "",
     },
   });
@@ -73,11 +73,19 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
   const [open, setOpen] = useState(false);
 
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename
+        ? ` ${res.Middlename.charAt(0).toUpperCase()}.`
+        : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}`.trim();
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
   const filteredResidents = useMemo(() => {
     return allResidents.filter((res) =>
@@ -385,6 +393,66 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
                         }
                         value={field.value ?? ""}
                         className="text-black"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Term Start */}
+              <FormField
+                control={form.control}
+                name="TermStart"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-black font-bold text-xs">
+                      Term Start
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="text-black"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : undefined
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Term End */}
+              <FormField
+                control={form.control}
+                name="TermEnd"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-black font-bold text-xs">
+                      Term End
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="text-black"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
