@@ -1,6 +1,6 @@
-import Maharlika from "@/assets/geojson/Maharlika.json";
-import Pasacao from "@/assets/geojson/Pasacao.json";
+import Rail from "@/assets/geojson/Rail.json";
 import Street from "@/assets/geojson/Street.json";
+import Road from "@/assets/geojson/Road.json";
 import Border from "@/assets/geojson/Border.json";
 import Building from "@/assets/geojson/Building.json";
 import Zone from "@/assets/geojson/Zone.json";
@@ -30,7 +30,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import Filter from "@/components/ui/filter";
 
-const center: LatLngExpression = [13.579126, 123.063078];
+const center: LatLngExpression = [13.5899926, 123.081108];
 
 export default function Map() {
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
@@ -94,6 +94,14 @@ export default function Map() {
     interactive: true,
   };
 
+  const railStyle: L.PathOptions = {
+    color: "#000000",
+    weight: 4,
+    dashArray: "6,6",
+    fillOpacity: 0,
+    interactive: true,
+  };
+
   const borderStyle: L.PathOptions = {
     fillColor: "#FAF7F3",
     weight: 1,
@@ -118,9 +126,10 @@ export default function Map() {
   };
 
   const onEachRoad = (road, layer) => {
-    const roadName = road.properties.name;
+    const displayName = road.properties?.name || road.properties?.mapping_name || "Poblacion Street";
 
-    layer.bindTooltip(roadName, { permanent: false, direction: "top", sticky: true });
+    layer.bindTooltip(displayName, { permanent: false, direction: "top", sticky: true });
+
     layer.on("mouseover", () => {
       layer.openTooltip();
       layer.setStyle({
@@ -140,11 +149,32 @@ export default function Map() {
       });
     });
   };
+
+  const onEachRail = (rail, layer) => {
+    const displayName = rail.properties?.name || "Poblacion Rail";
+
+    layer.bindTooltip(displayName, { permanent: false, direction: "top", sticky: true });
+
+    layer.on("mouseover", () => {
+      layer.openTooltip();
+      layer.setStyle({
+        color: "#555",
+        weight: 5,
+        dashArray: "6,4",
+      });
+    });
+
+    layer.on("mouseout", () => {
+      layer.closeTooltip();
+      layer.setStyle(railStyle);
+    });
+  };
   const queryClient = useQueryClient()
   const [deleteTarget, setDeleteTarget] = useState<{ id: number, name: string } | null>(null);
   const onEachInfra = (infra, layer) => {
-    const display = infra.properties?.mapping_name;
-    let popupContent = String(display ?? "Not Assigned yet.");
+    const display = infra.properties?.mapping_name || "Not Assigned yet.";
+    let popupContent = String(display);
+
     if (popupContent.includes(",")) {
       const parts = popupContent.split(",").map(p => p.trim());
       if (parts.length > 1) {
@@ -153,6 +183,7 @@ export default function Map() {
         popupContent = `${commercial}<br/>${household}`;
       }
     }
+
     layer.bindTooltip(popupContent, { permanent: false, direction: "top", sticky: true });
 
     layer.on("mouseover", () => {
@@ -161,7 +192,7 @@ export default function Map() {
         infra.properties?.type?.toLowerCase().includes("commercial") &&
         /Household #\s*\d+/.test(display)
       ) {
-        layer.setStyle({ color: "blue", fillColor: "#66cc66" }); // commercial + household hover with light green fill
+        layer.setStyle({ color: "blue", fillColor: "green" }); // commercial + household hover with light green fill
       } else if (infra.properties?.type?.toLowerCase().includes("commercial")) {
         layer.setStyle({ color: "#6699ff", fillColor: "#6699ff" }); // lighter blue
       } else if (infra.properties?.type?.toLowerCase().includes("institutional")) {
@@ -194,14 +225,12 @@ export default function Map() {
           fillColor: "purple",
         });
       } else {
-        layer.setStyle(
-          /Household #\s*\d+/.test(display) ? updatedStyle : infraStyle
-        );
+        layer.setStyle(/Household #\s*\d+/.test(display) ? updatedStyle : infraStyle);
       }
     });
 
     layer.on("click", async () => {
-      const feature = building?.features.find((b) => b.properties?.id === infra?.properties?.id)
+      const feature = building?.features.find((b) => b.properties?.id === infra?.properties?.id);
       if (feature?.properties?.mapping_name !== undefined) {
         setDeleteTarget({
           id: feature.properties?.id,
@@ -222,8 +251,8 @@ export default function Map() {
                 Lastname: r.lastname,
                 Role: r.role,
                 Income: r.income
-              }))
-              const head = member?.find(r => r.Role.toLowerCase() === "head")
+              }));
+              const head = member?.find(r => r.Role.toLowerCase() === "head");
               return {
                 id: data?.household.id,
                 household_number: data?.household?.household_number,
@@ -233,8 +262,8 @@ export default function Map() {
                 zone: data?.household?.zone,
                 date: new Date(data?.household?.date_of_residency),
                 status: data?.household?.status,
-              }
-            }
+              };
+            };
             setViewHousehold(parsedData);
           } else {
             setSelectedFeature(infra);
@@ -255,13 +284,16 @@ export default function Map() {
 const onEachZone = (zone, layer) => {
   const id = zone.properties?.id || "Unknown";
   switch(id){
-    case 1: layer.setStyle({color: "red", fillColor: "red", fillOpacity: 0.1}); break;
-    case 2: layer.setStyle({color: "blue", fillColor: "blue", fillOpacity: 0.1}); break;
-    case 3: layer.setStyle({color: "green", fillColor: "green", fillOpacity: 0.1}); break;
-    case 4: layer.setStyle({color: "purple", fillColor: "purple", fillOpacity: 0.1}); break;
-    case 5: layer.setStyle({color: "orange", fillColor: "orange", fillOpacity: 0.1}); break;
-    case 6: layer.setStyle({color: "brown", fillColor: "brown", fillOpacity: 0.1}); break;
-    case 7: layer.setStyle({color: "pink", fillColor: "pink", fillOpacity: 0.1}); break;
+    case 1: layer.setStyle({color: "#9ACD32", fillColor: "#9ACD32", fillOpacity: 0.1}); break;
+    case 2: layer.setStyle({color: "purple", fillColor: "purple", fillOpacity: 0.1}); break;
+    case 3: layer.setStyle({color: "blue", fillColor: "blue", fillOpacity: 0.1}); break;
+    case 4: layer.setStyle({color: "green", fillColor: "green", fillOpacity: 0.1}); break;
+    case 5: layer.setStyle({color: "brown", fillColor: "brown", fillOpacity: 0.1}); break;
+    case 6: layer.setStyle({color: "yellow", fillColor: "yellow", fillOpacity: 0.1}); break;
+    case 7: layer.setStyle({color: "red", fillColor: "red", fillOpacity: 0.1}); break;
+    case 8: layer.setStyle({color: "cyan", fillColor: "cyan", fillOpacity: 0.1}); break;
+    case 9: layer.setStyle({color: "pink", fillColor: "pink", fillOpacity: 0.1}); break;
+    case 10: layer.setStyle({color: "orange", fillColor: "orange", fillOpacity: 0.1}); break;
     default: layer.setStyle({color: "gray", fillColor: "gray", fillOpacity: 0.1}); break;
   }
   layer.bindTooltip(`Zone ${id}`, { permanent: false, direction: "top", sticky: true });
@@ -318,17 +350,17 @@ const onEachZone = (zone, layer) => {
         <GeoJSON data={Border.features as any} style={borderStyle} />
         <GeoJSON data={Zone.features as any} onEachFeature={onEachZone}/>
         <GeoJSON
-          data={Pasacao.features as any}
-          style={roadStyle}
-          onEachFeature={onEachRoad}
-        />
-        <GeoJSON
-          data={Maharlika.features as any}
-          style={roadStyle}
-          onEachFeature={onEachRoad}
+          data={Rail.features as any}
+          style={railStyle}
+          onEachFeature={onEachRail}
         />
         <GeoJSON
           data={Street.features as any}
+          style={roadStyle}
+          onEachFeature={onEachRoad}
+        />
+        <GeoJSON
+          data={Road.features as any}
           style={roadStyle}
           onEachFeature={onEachRoad}
         />
@@ -386,36 +418,46 @@ const onEachZone = (zone, layer) => {
           {/* Zones Legend */}
           <h2 className="font-bold mt-4 mb-2">Zones</h2>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'red', borderColor: 'red' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: '#9ACD32', borderColor: '#9ACD32' }}></div>
             Zone 1
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'blue', borderColor: 'blue' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'purple', borderColor: 'purple' }}></div>
             Zone 2
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'green', borderColor: 'green' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'blue', borderColor: 'blue' }}></div>
             Zone 3
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'purple', borderColor: 'purple' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'green', borderColor: 'green' }}></div>
             Zone 4
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'orange', borderColor: 'orange' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'brown', borderColor: 'brown' }}></div>
             Zone 5
           </div>
           <div className="flex items-center mb-1">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'brown', borderColor: 'brown' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'yellow', borderColor: 'yellow' }}></div>
             Zone 6
           </div>
           <div className="flex items-center">
-            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'pink', borderColor: 'pink' }}></div>
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'red', borderColor: 'red' }}></div>
             Zone 7
           </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'cyan', borderColor: 'cyan' }}></div>
+            Zone 8
+          </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'pink', borderColor: 'pink' }}></div>
+            Zone 9
+          </div>
+          <div className="flex items-center mb-1">
+            <div className="w-6 h-6 border-2 mr-2" style={{ backgroundColor: 'orange', borderColor: 'orange' }}></div>
+            Zone 10
+          </div>
         </div>
-      <h1 className="mt-2 text-end">Tambo Land Area
-        : <span className="font-bold">294.754 Hectares</span></h1>
       {deleteTarget && (
         <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
           <DialogContent className="bg-white text-black">
