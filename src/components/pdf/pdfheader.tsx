@@ -106,7 +106,7 @@ export default function PDFHeader() {
             fontWeight: "bold",
           }}
         >
-          BARANGAY {settings?.Barangay?.toUpperCase() || "Poblacion"}
+          BARANGAY {settings?.Barangay?.toUpperCase() || "Calawat"}
         </Text>
       </View>
 
