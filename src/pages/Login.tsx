@@ -14,7 +14,7 @@ import { ErrorResponse, LoginResponse } from "@/service/api/auth/login";
 
 export default function LoginPage() {
   // SYSTEM LOCK CHECK — MONTHLY
-  const lockDate = new Date("2026-1-1"); // year-month-day
+  const lockDate = new Date("2026-3-1"); // year-month-day
   const today = new Date();
 
   if (today >= lockDate) {
