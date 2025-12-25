@@ -1,3 +1,5 @@
 vite.config.ts
 tauri.conf.json
 .env
+src/assets/geojson/
+Map.tsx
