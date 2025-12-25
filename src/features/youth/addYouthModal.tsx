@@ -211,11 +211,10 @@ export default function AddYouthModal() {
                         <FormItem>
                           <FormLabel>First Name</FormLabel>
                           <FormControl>
-                            <Input
+                          <Input
                               id="first_name"
                               type="text"
                               placeholder="Enter first name"
-                              required
                               {...field}
                               className="text-black"
                             />
@@ -254,11 +253,10 @@ export default function AddYouthModal() {
                         <FormItem>
                           <FormLabel>Last Name</FormLabel>
                           <FormControl>
-                            <Input
+                          <Input
                               id="last_name"
                               type="text"
                               placeholder="Enter last name"
-                              required
                               {...field}
                               className="text-black"
                             />

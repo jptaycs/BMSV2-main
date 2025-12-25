@@ -2,6 +2,7 @@ import { Blotter } from "@/types/apitypes";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import PDFHeader from "./pdfheader";
+import { useOfficial } from "@/features/api/official/useOfficial";
 
 type Props = {
   filter: string;
@@ -29,6 +30,21 @@ const styles = StyleSheet.create({
 });
 
 export const SummonPDF = ({ blotters }: Props) => {
+  const { data: officials } = useOfficial();
+
+  const getOfficialName = (role: string, section: string) => {
+    if (!officials) return null;
+    const list = Array.isArray(officials) ? officials : officials.officials;
+    const found = list.find(
+      (o) =>
+        (o.Section?.toLowerCase() || "").includes(section.toLowerCase()) &&
+        (o.Role?.toLowerCase() || "").includes(role.toLowerCase())
+    );
+    return found?.Name ?? null;
+  };
+
+  const captainName = getOfficialName("barangay captain", "barangay officials");
+
   const todayDate = format(new Date(), "MMMM do, yyyy");
 
   return (
@@ -144,7 +160,7 @@ export const SummonPDF = ({ blotters }: Props) => {
               </Text>
               <View style={{ marginTop: 40, alignItems: "flex-end" }}>
                 <Text style={{ fontWeight: "bold", textDecoration: "underline" }}>
-                  HON. VERGEL S. BORDON
+                  HON. {captainName || "________________"}
                 </Text>
                 <Text>Punong Barangay/Lupon Chairman</Text>
               </View>

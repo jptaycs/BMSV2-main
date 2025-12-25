@@ -227,7 +227,7 @@ export default function EditHouseholdModal({
   const [householdType, setHouseholdType] = useState(household.Type || "");
   const [selectedMembers, setSelectedMembers] = useState<SelectedMember[]>([]);
   const [zone, setZone] = useState(household.Zone || "");
-  const [dateOfResidency, setDateOfResidency] = useState<Date>(
+  const [dateOfResidency, setDateOfResidency] = useState<Date | undefined>(
     household.DateOfResidency ? new Date(household.DateOfResidency) : undefined
   );
   const [status, setStatus] = useState(household.Status || "");
@@ -347,6 +347,11 @@ export default function EditHouseholdModal({
       toast.error("Please add at least one family member");
       return;
     }
+    const invalidRole = selectedMembers.some((m) => !m.Role);
+    if (invalidRole) {
+      toast.error("All household members must have a role assigned");
+      return;
+    }
     const formData = {
       householdNumber: householdNumber,
       householdType: householdType,
@@ -356,11 +361,18 @@ export default function EditHouseholdModal({
       })),
       zone: zone,
       dateOfResidency:
-        dateOfResidency instanceof Date ? dateOfResidency.toISOString() : "",
+        dateOfResidency instanceof Date
+          ? dateOfResidency.toISOString().split("T")[0]
+          : "",
       status: status,
     };
     toast.promise(
-      editMutation.mutateAsync({ ID: household.ID, updated: formData }),
+      (() => {
+        if (!household.ID) {
+          throw new Error("Invalid household ID");
+        }
+        return editMutation.mutateAsync({ ID: household.ID, updated: formData });
+      })(),
       {
         loading: "Updating household...",
         success: () => {
@@ -672,6 +684,8 @@ export default function EditHouseholdModal({
                           <SelectItem value="6">Zone 6</SelectItem>
                           <SelectItem value="7">Zone 7</SelectItem>
                           <SelectItem value="8">Zone 8</SelectItem>
+                          <SelectItem value="8">Zone 9</SelectItem>
+                          <SelectItem value="8">Zone 10</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -19,8 +19,7 @@ import {
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { ArrowLeftCircleIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -30,9 +29,9 @@ import {
 } from "@/components/ui/select";
 import CertificateHeader from "../certificateHeader";
 import { useOfficial } from "@/features/api/official/useOfficial";
+import { NavLink } from "react-router-dom";
 
 export default function Completion() {
-  const navigate = useNavigate();
   // State for new fields
   const [projectDescription, setProjectDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -43,14 +42,33 @@ export default function Completion() {
     useState("administration");
   const [notedBy, setNotedBy] = useState("ALVIN C. FEDERICO");
   const [notedByRole, setNotedByRole] = useState("Municipal Engineer");
-  const [acceptedBy, setAcceptedBy] = useState("VERGEL S. BORDON");
-  const [acceptedByRole, setAcceptedByRole] = useState("Barangay Captain");
+  const { data: officials } = useOfficial();
+  const getOfficialName = (role: string, section: string) => {
+    if (!officials) return null;
+    const list = Array.isArray(officials) ? officials : officials.officials;
+    const found = list.find(
+      (o) =>
+        (o.Section?.toLowerCase() || "").includes(section.toLowerCase()) &&
+        (o.Role?.toLowerCase() || "").includes(role.toLowerCase())
+    );
+    return found ?? null;
+  };
+
+  const [acceptedBy, setAcceptedBy] = useState<string | null>(null);
+  const [acceptedByRole, setAcceptedByRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const captain = getOfficialName("barangay captain", "barangay officials");
+    if (captain) {
+      setAcceptedBy(captain.Name);
+      setAcceptedByRole(captain.Role);
+    }
+  }, [officials]);
 
   const [openCalendarFrom, setOpenCalendarFrom] = useState(false);
   const [openCalendarTo, setOpenCalendarTo] = useState(false);
   const [openCalendarCompletion, setOpenCalendarCompletion] = useState(false);
 
-  const { data: officials } = useOfficial();
 
   const filteredOfficials = useMemo(() => {
     if (!officials) return [];
@@ -74,11 +92,16 @@ export default function Completion() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Certificate of Completion
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
               Please fill out the necessary information needed for Certificate
@@ -277,7 +300,7 @@ export default function Completion() {
                   Accepted by (Barangay Captain)
                 </label>
                 <Select
-                  value={`${acceptedBy}::${acceptedByRole}`}
+                  value={acceptedBy && acceptedByRole ? `${acceptedBy}::${acceptedByRole}` : ""}
                   onValueChange={(value) => {
                     const [name, role] = value.split("::");
                     setAcceptedBy(name);

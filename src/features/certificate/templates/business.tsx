@@ -29,7 +29,6 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Buffer } from "buffer";
@@ -46,6 +45,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -63,7 +63,6 @@ type Resident = {
 
 export default function BusinessPermit() {
   const { data: officials } = useOfficial();
-  const navigate = useNavigate();
   const [residents, setResidents] = useState<Resident[]>([]);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -102,11 +101,23 @@ export default function BusinessPermit() {
   });
 
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename
+        ? ` ${res.Middlename.charAt(0)}.`
+        : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.replace(
+        /\s+/g,
+        " "
+      );
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
 
   const filteredResidents = useMemo(() => {
@@ -174,11 +185,18 @@ export default function BusinessPermit() {
       <Card className="flex-2 flex flex-col justify-between">
         <CardHeader>
           <CardTitle className="flex gap-2 items-center justify-start">
-            <ArrowLeftCircleIcon
-              className="h-8 w-8"
-              onClick={() => navigate(-1)}
-            />
-            Barangay Business Permit
+            <div className="flex justify-start">
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-0"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
+            </div>
           </CardTitle>
           <CardDescription className="text-start">
             Please fill out the necessary information needed for Barangay
@@ -465,7 +483,9 @@ export default function BusinessPermit() {
                     selectedResident.Middlename
                       ? selectedResident.Middlename.charAt(0) + ". "
                       : ""
-                  }${selectedResident.Lastname}`,
+                  }${selectedResident.Lastname}${
+                    selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                  }`,
                   type_: "Barangay Business Permit",
                   issued_date: formattedIssuedDate,
                   ownership_text: businessOwner || "",
@@ -481,7 +501,9 @@ export default function BusinessPermit() {
                     selectedResident.Middlename
                       ? selectedResident.Middlename.charAt(0) + ". "
                       : ""
-                  }${selectedResident.Lastname}'s certificate was saved.`,
+                  }${selectedResident.Lastname}${
+                    selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                  }'s certificate was saved.`,
                 });
               } catch (error) {
                 console.error("Save certificate failed:", error);

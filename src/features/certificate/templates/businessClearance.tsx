@@ -31,7 +31,6 @@ import { useAddCertificate } from "@/features/api/certificate/useAddCertificate"
 import CertificateHeader from "../certificateHeader";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import CertificateFooter from "../certificateFooter";
 import {
@@ -41,6 +40,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -57,16 +57,21 @@ type Resident = {
 };
 
 export default function BusinessClearance() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.first_name} ${res.last_name}`.toLowerCase(),
-      label: `${res.first_name} ${res.last_name}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const fullName = `${res.first_name} ${
+        res.middle_name ? res.middle_name.charAt(0) + ". " : ""
+      }${res.last_name}${res.suffix ? " " + res.suffix : ""}`.trim();
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -168,15 +173,19 @@ export default function BusinessClearance() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Barangay Business Clearance
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
-              Please fill out the necessary information needed for Barangay
-              Business Clearance
+              Please fill out the necessary information needed for Barangay Business Clearance
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -475,7 +484,9 @@ export default function BusinessClearance() {
                       selectedResident.middle_name
                         ? selectedResident.middle_name.charAt(0) + ". "
                         : ""
-                    }${selectedResident.last_name}`,
+                    }${selectedResident.last_name}${
+                      selectedResident.suffix ? " " + selectedResident.suffix : ""
+                    }`,
                     type_: "Barangay Business Clearance",
                     issued_date: formattedIssuedDate,
                     ownership_text: businessOwner || "",
@@ -492,7 +503,9 @@ export default function BusinessClearance() {
                       selectedResident.middle_name
                         ? selectedResident.middle_name.charAt(0) + ". "
                         : ""
-                    }${selectedResident.last_name}'s certificate was saved.`,
+                    }${selectedResident.last_name}${
+                      selectedResident.suffix ? " " + selectedResident.suffix : ""
+                    }'s certificate was saved.`,
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);

@@ -36,11 +36,11 @@ import {
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { Buffer } from "buffer";
 import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -57,9 +57,9 @@ type Resident = {
 };
 
 export default function Unemployment() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const [editedResidentName, setEditedResidentName] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   const [search, setSearch] = useState("");
   const [settings, setSettings] = useState<{
@@ -127,13 +127,22 @@ export default function Unemployment() {
       .then((res) => {
         if (Array.isArray(res.residents)) {
           setResidents(res.residents);
-          const allRes = res.residents.map((res) => ({
-            value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-            label: `${res.Firstname} ${res.Lastname}`,
-            data: res,
-          }));
+          const allRes = res.residents.map((res) => {
+            const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+            const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+            const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.toLowerCase();
+            const labelName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`;
+            return {
+              value: fullName,
+              label: labelName,
+              data: res,
+            };
+          });
           const selected = allRes.find((r) => r.value === value)?.data;
           if (selected) {
+            setEditedResidentName(
+              `${selected.Firstname}${selected.Middlename ? ` ${selected.Middlename.charAt(0)}. ` : ""}${selected.Lastname}${selected.Suffix ? ` ${selected.Suffix}` : ""}`.replace(/\s+/g, " ").trim()
+            );
             if (selected.Birthday) {
               const dob = new Date(selected.Birthday);
               const today = new Date();
@@ -153,11 +162,17 @@ export default function Unemployment() {
 
   // Prepare resident options for select
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.toLowerCase();
+      const labelName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`;
+      return {
+        value: fullName,
+        label: labelName,
+        data: res,
+      };
+    });
   }, [residents]);
 
   const filteredResidents = useMemo(() => {
@@ -202,15 +217,19 @@ export default function Unemployment() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Unemployment Certificate
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
-              Please fill out the necessary information needed for Unemployment
-              Certification
+              Please fill out the necessary information needed for Unemployment Certification
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -251,11 +270,10 @@ export default function Unemployment() {
                                 key={res.value}
                                 value={res.value}
                                 className="text-black"
-                                onSelect={(currentValue) => {
-                                  setValue(
-                                    currentValue === value ? "" : currentValue
-                                  );
+                                onSelect={() => {
+                                  setValue(res.value);
                                   setOpen(false);
+                                  setEditedResidentName(res.label); // autofill editable name
                                 }}
                               >
                                 {res.label}
@@ -276,6 +294,19 @@ export default function Unemployment() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-2">
+                <label htmlFor="editedResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editedResidentName"
+                  type="text"
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={editedResidentName}
+                  onChange={(e) => setEditedResidentName(e.target.value)}
+                  placeholder="Edit resident name here"
+                />
+              </div>
               <div className="mt-4">
               {/* Prepared By */}
               <div className="mt-4">
@@ -449,13 +480,12 @@ export default function Unemployment() {
                   return;
                 }
                 try {
+                  const residentFullName =
+                    editedResidentName ||
+                    `${selectedResident.Firstname} ${selectedResident.Middlename ? selectedResident.Middlename.charAt(0) + ". " : ""}${selectedResident.Lastname}${selectedResident.Suffix ? " " + selectedResident.Suffix : ""}`.replace(/\s+/g, " ").trim();
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}`,
+                    resident_name: residentFullName,
                     type_: "Unemployment Certificate",
                     issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: "",
@@ -468,11 +498,7 @@ export default function Unemployment() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}'s certificate was saved.`,
+                    description: `${residentFullName}'s certificate was saved.`,
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -521,11 +547,9 @@ export default function Unemployment() {
                           {"            "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
-                          {`${selectedResident.Firstname} ${
-                            selectedResident.Middlename
-                              ? selectedResident.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.Lastname}`.toUpperCase()}
+                          {(editedResidentName ||
+                            `${selectedResident.Firstname} ${selectedResident.Middlename ? selectedResident.Middlename.charAt(0) + ". " : ""}${selectedResident.Lastname}${selectedResident.Suffix ? " " + selectedResident.Suffix : ""}`.replace(/\s+/g, " ").trim()
+                          ).toUpperCase()}
                         </Text>
                         <Text>
                           , {age}, {civilStatus.toLowerCase() || "civil status"}

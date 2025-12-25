@@ -25,7 +25,6 @@ import { useEffect } from "react";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
@@ -41,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Buffer } from "buffer";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -59,7 +59,6 @@ type Resident = {
 export default function Marriage() {
   const [orNumber, setOrNumber] = useState("");
   const [amount, setAmount] = useState("");
-  const navigate = useNavigate();
   const [openMale, setOpenMale] = useState(false);
   const [openFemale, setOpenFemale] = useState(false);
   const [value, setValue] = useState("");
@@ -70,17 +69,29 @@ export default function Marriage() {
   const [civilStatusMale, setCivilStatusMale] = useState("");
   const [ageFemale, setAgeFemale] = useState("");
   const [civilStatusFemale, setCivilStatusFemale] = useState("");
+  // Editable full names for Male and Female
+  const [editableMaleName, setEditableMaleName] = useState("");
+  const [editableFemaleName, setEditableFemaleName] = useState("");
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return {
+        value: fullName.toLowerCase(), // searchable (includes suffix)
+        label: fullName, // visible (includes suffix)
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
     return allResidents.filter((res) =>
-      res.label.toLowerCase().includes(search.toLowerCase())
+      res.value.includes(search.toLowerCase())
     );
   }, [allResidents, search]);
   const selectedResident = useMemo(() => {
@@ -150,6 +161,10 @@ export default function Marriage() {
         setAgeMale(calculatedAge.toString());
       }
       setCivilStatusMale(male.CivilStatus || "");
+      // Set editable male name
+      const middleInitial = male.Middlename ? ` ${male.Middlename.charAt(0)}.` : "";
+      const suffix = male.Suffix ? ` ${male.Suffix}` : "";
+      setEditableMaleName(`${male.Firstname}${middleInitial} ${male.Lastname}${suffix}`.replace(/\s+/g, " ").trim());
     }
     const female = allResidents.find((r) => r.value === value2)?.data;
     if (female) {
@@ -164,6 +179,10 @@ export default function Marriage() {
         setAgeFemale(calculatedAge.toString());
       }
       setCivilStatusFemale(female.CivilStatus || "");
+      // Set editable female name
+      const middleInitial = female.Middlename ? ` ${female.Middlename.charAt(0)}.` : "";
+      const suffix = female.Suffix ? ` ${female.Suffix}` : "";
+      setEditableFemaleName(`${female.Firstname}${middleInitial} ${female.Lastname}${suffix}`.replace(/\s+/g, " ").trim());
     }
   }, [allResidents, value, value2]);
   const styles = StyleSheet.create({
@@ -178,15 +197,19 @@ export default function Marriage() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Marriage Certificate
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
-              Please fill out the necessary information needed for Marriage
-              Certification
+              Please fill out the necessary information needed for marriage Certification
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,6 +276,10 @@ export default function Marriage() {
                                     setCivilStatusMale(
                                       selected.CivilStatus || ""
                                     );
+                                    // Update editable full name
+                                    const middleInitial = selected.Middlename ? ` ${selected.Middlename.charAt(0)}.` : "";
+                                    const suffix = selected.Suffix ? ` ${selected.Suffix}` : "";
+                                    setEditableMaleName(`${selected.Firstname}${middleInitial} ${selected.Lastname}${suffix}`.replace(/\s+/g, " ").trim());
                                   }
                                   setValue(
                                     currentValue === value ? "" : currentValue
@@ -278,6 +305,19 @@ export default function Marriage() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {/* Editable full name input (Male) */}
+              <div className="mt-2">
+                <label htmlFor="editableMaleName" className="block text-sm font-medium text-gray-700">
+                  Edit Male Resident Name
+                </label>
+                <input
+                  type="text"
+                  id="editableMaleName"
+                  value={editableMaleName}
+                  onChange={(e) => setEditableMaleName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                />
+              </div>
               {/* Civil Status (Male) input field */}
               <div className="mt-4">
                 <label
@@ -376,6 +416,10 @@ export default function Marriage() {
                                     setCivilStatusFemale(
                                       selected.CivilStatus || ""
                                     );
+                                    // Update editable full name
+                                    const middleInitial = selected.Middlename ? ` ${selected.Middlename.charAt(0)}.` : "";
+                                    const suffix = selected.Suffix ? ` ${selected.Suffix}` : "";
+                                    setEditableFemaleName(`${selected.Firstname}${middleInitial} ${selected.Lastname}${suffix}`.replace(/\s+/g, " ").trim());
                                   }
                                   setValue2(
                                     currentValue === value2 ? "" : currentValue
@@ -401,6 +445,19 @@ export default function Marriage() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {/* Editable full name input (Female) */}
+              <div className="mt-2">
+                <label htmlFor="editableFemaleName" className="block text-sm font-medium text-gray-700">
+                  Edit Female Resident Name
+                </label>
+                <input
+                  type="text"
+                  id="editableFemaleName"
+                  value={editableFemaleName}
+                  onChange={(e) => setEditableFemaleName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                />
+              </div>
               {/* Civil Status (Female) input field */}
               <div className="mt-4">
                 <label
@@ -524,19 +581,10 @@ export default function Marriage() {
                   return;
                 }
                 try {
+                  // Use editable names for saving
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname} & ${
-                      selectedResident2?.Firstname ?? ""
-                    } ${
-                      selectedResident2?.Middlename
-                        ? selectedResident2.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident2?.Lastname ?? ""}`,
+                    resident_name: `${editableMaleName} & ${editableFemaleName}`,
                     type_: "Marriage Certificate",
                     issued_date: new Date().toISOString().split('T')[0], // format YYYY-MM-DD
                     ownership_text: "",
@@ -548,11 +596,7 @@ export default function Marriage() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}'s certificate was saved.`,
+                    description: `${editableMaleName}'s certificate was saved.`,
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -601,11 +645,7 @@ export default function Marriage() {
                           {"         "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
-                          {`MR. ${selectedResident.Firstname} ${
-                            selectedResident.Middlename
-                              ? selectedResident.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.Lastname}`.toUpperCase()}
+                          {`MR. ${editableMaleName ? editableMaleName.toUpperCase() : ""}`}
                         </Text>
                         , {ageMale || "___"} years old,{" "}
                         {civilStatusMale || "___"}, a resident of zone{" "}
@@ -615,11 +655,7 @@ export default function Marriage() {
                         {settings ? settings.province : "________________"}{" "}
                         wishes to contract marriage with
                         <Text style={{ fontWeight: "bold" }}>
-                          {`MS. ${selectedResident2.Firstname} ${
-                            selectedResident2.Middlename
-                              ? selectedResident2.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident2.Lastname}`.toUpperCase()}
+                          {`MS. ${editableFemaleName ? editableFemaleName.toUpperCase() : ""}`}
                         </Text>
                         , {ageFemale || "___"} years old,{" "}
                         {civilStatusFemale || "___"}, no legal impediment to

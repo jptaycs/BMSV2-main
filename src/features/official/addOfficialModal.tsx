@@ -17,10 +17,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { officialSchema } from "@/types/formSchema";
 import {
@@ -28,8 +27,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
+import { Command, CommandInput, CommandItem, CommandEmpty } from "@/components/ui/command";
+import { Virtuoso } from "react-virtuoso";
 import {
   Select,
   SelectContent,
@@ -37,14 +36,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Official } from "@/types/apitypes";
+import { Official, Resident } from "@/types/apitypes";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAddOfficial } from "../api/official/useAddOfficial";
+import { ChevronsUpDown, Check, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ErrorResponse } from "@/service/api/auth/login";
+import getResident from "@/service/api/resident/getResident";
 
 export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
-  const [openCalendarTermStart, setOpenCalendarTermStart] = useState(false);
-  const [openCalendarTermEnd, setOpenCalendarTermEnd] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [, setImagePreview] = useState("");
 
@@ -57,14 +57,51 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
       Section: "",
       Age: undefined,
       Contact: "",
-      TermStart: undefined,
-      TermEnd: undefined,
+      TermStart: new Date(new Date().getFullYear() - 3, 10, 1),
+      TermEnd: new Date(new Date().getFullYear() + 1, 10, 1),
       Zone: "",
     },
   });
 
   const addMutation = useAddOfficial();
   const queryClient = useQueryClient();
+
+  // Resident search state
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [search, setSearch] = useState("");
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const allResidents = useMemo(() => {
+    return residents.map((res) => {
+      const middleInitial = res.Middlename
+        ? ` ${res.Middlename.charAt(0).toUpperCase()}.`
+        : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}`.trim();
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
+  }, [residents]);
+  const filteredResidents = useMemo(() => {
+    return allResidents.filter((res) =>
+      res.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [allResidents, search]);
+
+  useEffect(() => {
+    getResident()
+      .then((res) => {
+        if (Array.isArray(res.residents)) {
+          setResidents(res.residents);
+        }
+      })
+      .catch(console.error);
+  }, []);
   async function onSubmit(values: z.infer<typeof officialSchema>) {
     const reformattedValues = {
       ...values,
@@ -259,21 +296,78 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
                   </FormItem>
                 )}
               />
-              {/* Name */}
+              {/* Name - Resident Search Dropdown */}
               <FormField
                 control={form.control}
                 name="Name"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
-                    <FormLabel className="text-black font-bold text-xs">
-                      Name
-                    </FormLabel>
+                    <FormLabel className="text-black font-bold text-xs">Select Resident</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter Name"
-                        className="text-black"
-                        {...field}
-                      />
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full flex justify-between">
+                            {value ? value : "Select a Resident"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-full">
+                          <Command>
+                            <CommandInput
+                              placeholder="Search Resident..."
+                              className="h-9"
+                              value={search}
+                              onValueChange={setSearch}
+                            />
+                            {filteredResidents.length === 0 ? (
+                              <CommandEmpty>No Residents Found</CommandEmpty>
+                            ) : (
+                              <div className="h-60 overflow-hidden">
+                                <Virtuoso
+                                  style={{ height: "100%" }}
+                                  totalCount={filteredResidents.length}
+                                  itemContent={(index) => {
+                                    const res = filteredResidents[index];
+                                    return (
+                                      <CommandItem
+                                        key={res.value}
+                                        value={res.value}
+                                        className="text-black"
+                                        onSelect={(currentValue) => {
+                                          form.setValue("Name", res.label);
+                                          setValue(currentValue === value ? "" : res.label);
+                                          if (res.data?.Birthday) {
+                                            const dob = new Date(res.data.Birthday);
+                                            const today = new Date();
+                                            let calculatedAge = today.getFullYear() - dob.getFullYear();
+                                            const m = today.getMonth() - dob.getMonth();
+                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                                              calculatedAge--;
+                                            }
+                                            form.setValue("Age", calculatedAge);
+                                          } else {
+                                            form.setValue("Age", undefined);
+                                          }
+                                          form.setValue("Contact", res.data?.MobileNumber || "");
+                                          setOpen(false);
+                                        }}
+                                      >
+                                        {res.label}
+                                        <Check
+                                          className={cn(
+                                            "ml-auto",
+                                            value === res.label ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -299,6 +393,66 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
                         }
                         value={field.value ?? ""}
                         className="text-black"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Term Start */}
+              <FormField
+                control={form.control}
+                name="TermStart"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-black font-bold text-xs">
+                      Term Start
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="text-black"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : undefined
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Term End */}
+              <FormField
+                control={form.control}
+                name="TermEnd"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-black font-bold text-xs">
+                      Term End
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="text-black"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -345,93 +499,6 @@ export default function AddOfficialModal({ onSave }: { onSave: () => void }) {
                   </FormItem>
                 )}
               />
-              {/* Term Start and Term End in flex gap-2 */}
-              <div className="flex gap-2">
-                {/* Term Start */}
-                <FormField
-                  control={form.control}
-                  name="TermStart"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="text-black font-bold text-xs">
-                        Term Start
-                      </FormLabel>
-                      <Popover
-                        open={openCalendarTermStart}
-                        onOpenChange={setOpenCalendarTermStart}
-                      >
-                        <FormControl>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full text-black"
-                            >
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pick a date"}
-                              <CalendarIcon className="ml-auto h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                        </FormControl>
-                        <PopoverContent className="w-auto p-0" align="center">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            captionLayout="dropdown"
-                            fromYear={new Date().getFullYear() - 5}
-                            toYear={new Date().getFullYear() + 5}
-                            onDayClick={() => setOpenCalendarTermStart(false)}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {/* Term End */}
-                <FormField
-                  control={form.control}
-                  name="TermEnd"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="text-black font-bold text-xs">
-                        Term End
-                      </FormLabel>
-                      <Popover
-                        open={openCalendarTermEnd}
-                        onOpenChange={setOpenCalendarTermEnd}
-                      >
-                        <FormControl>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full text-black"
-                            >
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pick a date"}
-                              <CalendarIcon className="ml-auto h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                        </FormControl>
-                        <PopoverContent className="w-auto p-0" align="center">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            captionLayout="dropdown"
-                            fromYear={new Date().getFullYear() - 5}
-                            toYear={new Date().getFullYear() + 5}
-                            onDayClick={() => setOpenCalendarTermEnd(false)}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </div>
 
             <div className="flex justify-end pt-4 space-x-2">

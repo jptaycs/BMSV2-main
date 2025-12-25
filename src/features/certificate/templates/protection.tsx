@@ -27,7 +27,6 @@ import { ArrowLeftCircleIcon, Check, ChevronsUpDown, CalendarIcon } from "lucide
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -41,6 +40,7 @@ import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
+import { NavLink } from "react-router-dom";
 
 type Resident = {
   ID?: number;
@@ -54,17 +54,22 @@ type Resident = {
 };
 
 export default function BarangayProtectionOrder() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   // const [captainName, setCaptainName] = useState<string | null>(null);
+  const [editableResidentName, setEditableResidentName] = useState("");
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.replace(/\s+/g, " ").trim();
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -135,10 +140,16 @@ export default function BarangayProtectionOrder() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
               Barangay Protection Order
             </CardTitle>
             <CardDescription className="text-start">
@@ -184,10 +195,14 @@ export default function BarangayProtectionOrder() {
                                 value={res.value}
                                 className="text-black"
                                 onSelect={(currentValue) => {
-                                  setValue(
-                                    currentValue === value ? "" : currentValue
-                                  );
+                                  const selected = allResidents.find(res => res.value === currentValue);
+                                  setValue(currentValue === value ? "" : currentValue);
                                   setOpen(false);
+                                  if (selected) {
+                                    setEditableResidentName(selected.label);
+                                  } else {
+                                    setEditableResidentName("");
+                                  }
                                 }}
                               >
                                 {res.label}
@@ -208,6 +223,19 @@ export default function BarangayProtectionOrder() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-4">
+                <label htmlFor="editableResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editableResidentName"
+                  type="text"
+                  value={editableResidentName}
+                  onChange={(e) => setEditableResidentName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Edit full resident name"
+                />
+              </div>
               <div className="mt-4">
                 <label
                   htmlFor="respondentName"
@@ -435,11 +463,13 @@ export default function BarangayProtectionOrder() {
                 try {
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
+                    resident_name: editableResidentName.trim() || (selectedResident ? `${selectedResident.Firstname}${
                       selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
+                        ? " " + selectedResident.Middlename.charAt(0) + "."
                         : ""
-                    }${selectedResident.Lastname}`,
+                    } ${selectedResident.Lastname}${
+                      selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                    }`.replace(/\s+/g, " ").trim() : ""),
                     type_: "Barangay Protection Order",
                     issued_date: new Date().toISOString(),
                     respondent_name: respondentName,
@@ -452,11 +482,13 @@ export default function BarangayProtectionOrder() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
+                    description: `${selectedResident.Firstname}${
                       selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
+                        ? " " + selectedResident.Middlename.charAt(0) + "."
                         : ""
-                    }${selectedResident.Lastname}'s BPO was saved.`,
+                    } ${selectedResident.Lastname}${
+                      selectedResident.Suffix ? " " + selectedResident.Suffix : ""
+                    }'s BPO was saved.`.replace(/\s+/g, " ").trim(),
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -549,6 +581,13 @@ export default function BarangayProtectionOrder() {
                       </Text>
                       <View style={{ marginTop: 30 }}>
                         <Text style={{ fontSize: 18, textAlign: "right", fontWeight: "bold" }}>
+                          {`${selectedResident.Firstname}${
+                            selectedResident.Middlename ? ` ${selectedResident.Middlename.charAt(0)}.` : ""
+                          } ${selectedResident.Lastname}${
+                            selectedResident.Suffix ? ` ${selectedResident.Suffix}` : ""
+                          }`.toUpperCase()}
+                        </Text>
+                        <Text style={{ textAlign: "right", fontSize: 18 }}>
                           HON. {assignedOfficial || "________________"}
                         </Text>
                         <Text style={{ textAlign: "right", fontSize: 18 }}>

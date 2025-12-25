@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 type Certificate = {
   type: string;
@@ -28,17 +29,17 @@ const data: Certificate[] = [
   { type: "4PS Certificate", path: "fourps" }, // done
   { type: "Residency Certificate", path: "brgy-residency" }, // done
   { type: "Clearance Certificate", path: "brgy-clearance" }, // done
+  { type: "Completion Certificate", path: "cert-completion" }, // done
   { type: "Indigency Certificate", path: "brgy-indigency" }, // done
   { type: "Business Permit", path: "brgy-business-permit" }, // done
   { type: "Business Clearance", path: "brgy-business-clearance" }, // done
+  { type: "First Job Seeker Certificate", path: "cert-job" }, // done
   { type: "Protection Order", path: "cert-protection" }, // done
   { type: "Marriage Certificate", path: "cert-marriage" }, // done
   { type: "Ownership Certificate", path: "cert-ownership" }, // done
   { type: "Registration of Birth", path: "registration-birth" }, // done
   { type: "Solo Parent Certificate", path: "cert-solo" }, //done
   { type: "Unemployment Certificate", path: "cert-unemployment" }, //done
-  { type: "First Job Seeker Certificate", path: "cert-job" }, // done
-  { type: "Completion Certificate", path: "cert-completion" }, // done
   // { type: "Certification of BARC", path: "cert-barc" },
   // { type: "Certification of Blood", path: "cert-blood" },
   // { type: "Certification of Cut Tree", path: "cert-cut" },
@@ -57,6 +58,7 @@ const data: Certificate[] = [
 
 export default function IssueCertificateModal() {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
     <>
@@ -67,7 +69,7 @@ export default function IssueCertificateModal() {
             Issue Certificate
           </Button>
         </DialogTrigger>
-        <DialogContent className="py-5 px-0 flex flex-col gap-0 max-h-[30rem] overflow-hidden">
+        <DialogContent className="py-5 px-0 flex flex-col gap-0 max-h-[40rem] overflow-hidden">
           <div className="sticky top-0 z-10 p-6 border-b bg-background">
             <DialogHeader>
               <DialogTitle className="text-black">
@@ -78,6 +80,15 @@ export default function IssueCertificateModal() {
                 This helps us customize the content and layout based on your
                 selection.
               </DialogDescription>
+              <div className="mt-4">
+                <input
+                  type="text"
+                  placeholder="Search certificates..."
+                  className="w-full border rounded px-3 py-2 text-sm text-black"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-auto">
@@ -92,7 +103,9 @@ export default function IssueCertificateModal() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((cert, i) => (
+                  {data
+                    .filter(cert => cert.type.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map((cert, i) => (
                     <TableRow key={i} className="text-black">
                       <TableCell>
                         <div className="flex justify-between items-center">
