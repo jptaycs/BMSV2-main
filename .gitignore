@@ -1,3 +1,3 @@
-# vite.config.ts
-# src-tauri/tauri.conf.json
-# .env
+vite.config.ts
+src-tauri/tauri.conf.json
+.env
