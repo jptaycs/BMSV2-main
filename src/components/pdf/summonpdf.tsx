@@ -2,17 +2,11 @@ import { Blotter } from "@/types/apitypes";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import PDFHeader from "./pdfheader";
-
-type Official = {
-  Name: string;
-  Role?: string;
-  Section?: string;
-};
+import { useOfficial } from "@/features/api/official/useOfficial";
 
 type Props = {
   filter: string;
   blotters: Blotter[];
-  officials?: Official[] | { officials: Official[] };
 };
 
 const styles = StyleSheet.create({
@@ -35,13 +29,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export const SummonPDF = ({ blotters, officials }: Props) => {
+export const SummonPDF = ({ blotters }: Props) => {
+  const { data: officials } = useOfficial();
+
   const getOfficialName = (role: string, section: string) => {
     if (!officials) return null;
-    const list: Official[] | undefined = Array.isArray(officials)
-      ? officials
-      : officials.officials;
-    const found = list?.find(
+    const list = Array.isArray(officials) ? officials : officials.officials;
+    const found = list.find(
       (o) =>
         (o.Section?.toLowerCase() || "").includes(section.toLowerCase()) &&
         (o.Role?.toLowerCase() || "").includes(role.toLowerCase())

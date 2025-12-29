@@ -48,7 +48,7 @@ export default function AddBlotterModal() {
     resolver: zodResolver(blotterSchema),
     defaultValues: {
       ID: 0,
-      Type: "Complaint",
+      Type: "",
       ReportedBy: "",
       Involved: "",
       IncidentDate: new Date(),
@@ -119,7 +119,6 @@ export default function AddBlotterModal() {
                             <div className="flex gap-2">
                               <Select
                                 value={[
-                                  "Complaint",
                                   "Theft",
                                   "Assault",
                                   "Vandalism",
@@ -143,7 +142,6 @@ export default function AddBlotterModal() {
                                   <SelectValue placeholder="Select Type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Complaint">Complaint</SelectItem>
                                   <SelectItem value="Theft">Theft</SelectItem>
                                   <SelectItem value="Assault">Assault</SelectItem>
                                   <SelectItem value="Robbery">Robbery</SelectItem>
@@ -156,7 +154,6 @@ export default function AddBlotterModal() {
                                 </SelectContent>
                               </Select>
                               {![
-                                "Complaint",
                                 "Theft",
                                 "Assault",
                                 "Vandalism",
