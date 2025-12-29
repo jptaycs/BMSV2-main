@@ -1,0 +1,6 @@
+vite.config.ts
+tauri.conf.json
+.env
+src/assets/geojson/
+src/assets/logo_barangay.png
+Map.tsx

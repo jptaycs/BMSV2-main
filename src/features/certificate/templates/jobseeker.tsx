@@ -30,7 +30,6 @@ import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeftCircleIcon, ChevronsUpDown, Check } from "lucide-react";
 import CertificateFooter from "../certificateFooter";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -61,13 +61,13 @@ export default function Jobseeker() {
   const [residencyYear, setResidencyYear] = useState("");
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   const [age, setAge] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
   const [assignedOfficial, setAssignedOfficial] = useState("");
+  const [editedResidentName, setEditedResidentName] = useState("");
   // const [logoMunicipalityDataUrl, setLogoMunicipalityDataUrl] = useState<string | null>(null);
   const [settings, setSettings] = useState<{
     Barangay: string;
@@ -96,11 +96,18 @@ export default function Jobseeker() {
     "Identification",
   ];
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.toLowerCase();
+      const labelName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.trim();
+
+      return {
+        value: fullName,
+        label: labelName,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -185,15 +192,19 @@ export default function Jobseeker() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              First Time Job Seeker Certificate
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
-              Please fill out the necessary information needed for Job Seeker
-              Certification
+              Please fill out the necessary information needed for 4ps Certification
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -235,25 +246,15 @@ export default function Jobseeker() {
                                 value={res.value}
                                 className="text-black"
                                 onSelect={(currentValue) => {
-                                  setValue(
-                                    currentValue === value ? "" : currentValue
-                                  );
-                                  const selected = allResidents.find(
-                                    (r) => r.value === currentValue
-                                  )?.data;
+                                  setValue(currentValue === value ? "" : currentValue);
+                                  const selected = allResidents.find((r) => r.value === currentValue)?.data;
                                   if (selected) {
                                     if (selected.Birthday) {
                                       const dob = new Date(selected.Birthday);
                                       const today = new Date();
-                                      let calculatedAge =
-                                        today.getFullYear() - dob.getFullYear();
-                                      const m =
-                                        today.getMonth() - dob.getMonth();
-                                      if (
-                                        m < 0 ||
-                                        (m === 0 &&
-                                          today.getDate() < dob.getDate())
-                                      ) {
+                                      let calculatedAge = today.getFullYear() - dob.getFullYear();
+                                      const m = today.getMonth() - dob.getMonth();
+                                      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
                                         calculatedAge--;
                                       }
                                       setAge(calculatedAge.toString());
@@ -261,6 +262,11 @@ export default function Jobseeker() {
                                       setAge("");
                                     }
                                     setCivilStatus(selected.CivilStatus || "");
+                                    // Update the editable resident name input with the full name
+                                    const fullName = `${selected.Firstname}${
+                                      selected.Middlename ? ` ${selected.Middlename.charAt(0)}.` : ""
+                                    } ${selected.Lastname}${selected.Suffix ? ` ${selected.Suffix}` : ""}`.replace(/\s+/g, " ").trim();
+                                    setEditedResidentName(fullName);
                                   }
                                   setOpen(false);
                                 }}
@@ -269,9 +275,7 @@ export default function Jobseeker() {
                                 <Check
                                   className={cn(
                                     "ml-auto",
-                                    value === res.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
+                                    value === res.value ? "opacity-100" : "opacity-0"
                                   )}
                                 />
                               </CommandItem>
@@ -283,6 +287,22 @@ export default function Jobseeker() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-2">
+                <label
+                  htmlFor="residentName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Edit Resident Name
+                </label>
+                <input
+                  id="residentName"
+                  type="text"
+                  value={editedResidentName}
+                  onChange={(e) => setEditedResidentName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Edit resident name if needed"
+                />
+              </div>
             </div>
             <div className="mt-4">
               <label
@@ -463,11 +483,7 @@ export default function Jobseeker() {
 
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}`,
+                    resident_name: editedResidentName || `${selectedResident.Firstname} ${selectedResident.Middlename ? selectedResident.Middlename.charAt(0) + ". " : ""}${selectedResident.Lastname}${selectedResident.Suffix ? " " + selectedResident.Suffix : ""}`,
                     type_: "Jobseeker Certificate",
                     issued_date: formatDate(new Date()),
                     ownership_text: "",

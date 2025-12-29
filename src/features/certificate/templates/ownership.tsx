@@ -25,7 +25,6 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { useEffect } from "react";
 import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -41,6 +40,7 @@ import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
+import { NavLink } from "react-router-dom";
 
 type Resident = {
   ID?: number;
@@ -54,7 +54,6 @@ type Resident = {
 };
 
 export default function Fourps() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -62,13 +61,21 @@ export default function Fourps() {
   const [civilStatus, setCivilStatus] = useState("");
   const [orNumber, setOrNumber] = useState("");
   const [amount, setAmount] = useState("");
+  const [editableResidentName, setEditableResidentName] = useState("");
   // const [captainName, setCaptainName] = useState<string | null>(null);
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename ? ` ${res.Middlename.charAt(0)}.` : "";
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+
+      const fullName = `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`.replace(/\s+/g, " ").trim();
+
+      return {
+        value: fullName.toLowerCase(),
+        label: fullName,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -184,15 +191,19 @@ export default function Fourps() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Certificate of Ownership
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
-              Please fill out the necessary information needed for Certification
-              of Ownership
+              Please fill out the necessary information needed for Certification of Ownership
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -234,9 +245,10 @@ export default function Fourps() {
                                 value={res.value}
                                 className="text-black"
                                 onSelect={(currentValue) => {
-                                  const selected = allResidents.find(
+                                  const selectedObj = allResidents.find(
                                     (r) => r.value === currentValue
-                                  )?.data;
+                                  );
+                                  const selected = selectedObj?.data;
                                   if (selected) {
                                     if (selected.Birthday) {
                                       const dob = new Date(selected.Birthday);
@@ -260,6 +272,15 @@ export default function Fourps() {
                                     setValue(
                                       currentValue === value ? "" : currentValue
                                     );
+                                    // Construct resident full name (Firstname, middle initial, Lastname, suffix)
+                                    const middleInitial = selected.Middlename
+                                      ? ` ${selected.Middlename.charAt(0)}.`
+                                      : "";
+                                    const suffix = selected.Suffix
+                                      ? ` ${selected.Suffix}`
+                                      : "";
+                                    const fullName = `${selected.Firstname}${middleInitial} ${selected.Lastname}${suffix}`.replace(/\s+/g, " ").trim();
+                                    setEditableResidentName(fullName);
                                   }
                                   setOpen(false);
                                 }}
@@ -282,6 +303,19 @@ export default function Fourps() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-4">
+                <label htmlFor="editableResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editableResidentName"
+                  type="text"
+                  value={editableResidentName}
+                  onChange={(e) => setEditableResidentName(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Edit resident name"
+                />
+              </div>
               <div className="mt-4">
                 <label
                   htmlFor="ownership"
@@ -449,13 +483,10 @@ export default function Fourps() {
                   return;
                 }
                 try {
+                  const residentFullName = editableResidentName;
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}`,
+                    resident_name: residentFullName,
                     type_: "Ownership Certificate",
                     issued_date: new Date().toISOString().slice(0, 10),
                     ownership_text: ownershipText,
@@ -469,11 +500,7 @@ export default function Fourps() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}'s certificate was saved.`,
+                    description: `${residentFullName}'s certificate was saved.`,
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -518,15 +545,11 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        <Text style={{  }}>
-                         {"         "}This is to certify that{" "}
+                        <Text style={{}}>
+                          {"         "}This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
-                          {`${selectedResident.Firstname} ${
-                            selectedResident.Middlename
-                              ? selectedResident.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.Lastname}`.toUpperCase()}
+                          {(editableResidentName || "").toUpperCase()}
                         </Text>
                         <Text>
                           , {age || "___"} years old, {civilStatus || "___"}, a

@@ -23,12 +23,10 @@ import { cn } from "@/lib/utils";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { useEffect } from "react";
-
 import { useOfficial } from "@/features/api/official/useOfficial";
 import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -37,11 +35,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, ArrowLeftCircleIcon } from "lucide-react";
 import { Buffer } from "buffer";
 import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
@@ -60,9 +59,9 @@ type Resident = {
 
 export default function Fourps() {
   const { data: officials } = useOfficial();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
   const [age, setAge] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
@@ -70,6 +69,7 @@ export default function Fourps() {
   const [purpose, setPurpose] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
   const [assignedOfficial, setAssignedOfficial] = useState("");
+  const [editedResidentName, setEditedResidentName] = useState("");
   const getOfficialName = (role: string, section: string) => {
     if (!officials) return null;
     const list = Array.isArray(officials) ? officials : officials.officials;
@@ -84,18 +84,31 @@ export default function Fourps() {
   const captainName = getOfficialName("barangay captain", "barangay officials");
   const { mutateAsync: addCertificate } = useAddCertificate();
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const middleInitial = res.Middlename
+        ? ` ${res.Middlename.charAt(0)}.`
+        : "";
+
+      const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+
+      const fullName =
+        `${res.Firstname}${middleInitial} ${res.Lastname}${suffix}`
+          .replace(/\s+/g, " ")
+          .trim();
+
+      return {
+        value: fullName.toLowerCase(), // searchable (includes suffix)
+        label: fullName, // visible (includes suffix)
+        data: res,
+      };
+    });
   }, [residents]);
-  const [search, setSearch] = useState("");
+  const [, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
     return allResidents.filter((res) =>
-      res.label.toLowerCase().includes(search.toLowerCase())
+      res.value.includes(inputValue.toLowerCase())
     );
-  }, [allResidents, search]);
+  }, [allResidents, inputValue]);
   const selectedResident = useMemo(() => {
     return allResidents.find((res) => res.value === value)?.data;
   }, [allResidents, value]);
@@ -156,12 +169,19 @@ export default function Fourps() {
       .then((res) => {
         if (Array.isArray(res.residents)) {
           setResidents(res.residents);
-          const allRes = res.residents.map((res) => ({
-            value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-            label: `${res.Firstname} ${res.Lastname}`,
-            data: res,
-          }));
-          const selected = allRes.find((r) => r.value === value)?.data;
+          // Remove old suffix-less mapping and selection logic; handled via allResidents useMemo
+          // If a value is already selected, update age/civilStatus accordingly
+          const selected = res.residents.find((r) => {
+            const middleInitial = r.Middlename
+              ? ` ${r.Middlename.charAt(0)}.`
+              : "";
+            const suffix = r.Suffix ? ` ${r.Suffix}` : "";
+            const fullName =
+              `${r.Firstname}${middleInitial} ${r.Lastname}${suffix}`
+                .replace(/\s+/g, " ")
+                .trim();
+            return fullName.toLowerCase() === value;
+          });
           if (selected) {
             if (selected.Birthday) {
               const dob = new Date(selected.Birthday);
@@ -193,11 +213,16 @@ export default function Fourps() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              4ps Certificate
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
               Please fill out the necessary information needed for 4ps
@@ -214,9 +239,7 @@ export default function Fourps() {
                     aria-expanded={open}
                     className="w-full flex justify-between"
                   >
-                    {value
-                      ? allResidents.find((res) => res.value === value)?.label
-                      : "Select a Resident"}
+                    {inputValue || "Select a Resident"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -224,9 +247,12 @@ export default function Fourps() {
                   <Command>
                     <CommandInput
                       placeholder="Search Resident..."
-                      className="h-9"
-                      value={search}
-                      onValueChange={setSearch}
+                      className="h-9 text-black"
+                      value={inputValue}
+                      onValueChange={(val) => {
+                        setInputValue(val);
+                        setSearch(val);
+                      }}
                     />
                     {allResidents.length === 0 ? (
                       <CommandEmpty>No Residents Found</CommandEmpty>
@@ -242,11 +268,10 @@ export default function Fourps() {
                                 key={res.value}
                                 value={res.value}
                                 className="text-black"
-                                onSelect={(currentValue) => {
-                                  const selected = allResidents.find(
-                                    (r) => r.value === currentValue
-                                  )?.data;
-                                  if (selected) {
+                                onSelect={() => {
+                                  if (res.data) {
+                                    const selected = res.data;
+
                                     if (selected.Birthday) {
                                       const dob = new Date(selected.Birthday);
                                       const today = new Date();
@@ -265,10 +290,11 @@ export default function Fourps() {
                                     } else {
                                       setAge("");
                                     }
+
                                     setCivilStatus(selected.CivilStatus || "");
-                                    setValue(
-                                      currentValue === value ? "" : currentValue
-                                    );
+                                    setValue(res.value);
+                                    setInputValue(res.label); // keeps input editable
+                                    setEditedResidentName(res.label); // prefill editable name field
                                   }
                                   setOpen(false);
                                 }}
@@ -291,6 +317,19 @@ export default function Fourps() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              <div className="mt-2">
+                <label htmlFor="editedResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edit Resident Name
+                </label>
+                <input
+                  id="editedResidentName"
+                  type="text"
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={editedResidentName}
+                  onChange={(e) => setEditedResidentName(e.target.value)}
+                  placeholder="Edit resident name here"
+                />
+              </div>
               <div className="mt-4">
                 <label
                   htmlFor="age"
@@ -423,7 +462,10 @@ export default function Fourps() {
                 />
               </div>
               <div className="mt-4">
-                <label htmlFor="orNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="orNumber"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   O.R. Number
                 </label>
                 <input
@@ -436,7 +478,10 @@ export default function Fourps() {
                 />
               </div>
               <div className="mt-4">
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Amount (PHP)
                 </label>
                 <input
@@ -459,20 +504,28 @@ export default function Fourps() {
                 }
                 try {
                   const issuedDate = new Date();
-                  const formattedIssuedDate = `${issuedDate.getFullYear()}-${String(issuedDate.getMonth() + 1).padStart(2, "0")}-${String(issuedDate.getDate()).padStart(2, "0")} ${String(issuedDate.getHours()).padStart(2, "0")}:${String(issuedDate.getMinutes()).padStart(2, "0")}:${String(issuedDate.getSeconds()).padStart(2, "0")}`;
+                  const formattedIssuedDate = `${issuedDate.getFullYear()}-${String(
+                    issuedDate.getMonth() + 1
+                  ).padStart(2, "0")}-${String(issuedDate.getDate()).padStart(
+                    2,
+                    "0"
+                  )} ${String(issuedDate.getHours()).padStart(2, "0")}:${String(
+                    issuedDate.getMinutes()
+                  ).padStart(2, "0")}:${String(
+                    issuedDate.getSeconds()
+                  ).padStart(2, "0")}`;
 
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}`,
+                    resident_name:
+                      editedResidentName ||
+                      `${selectedResident.Firstname} ${selectedResident.Middlename ? selectedResident.Middlename.charAt(0) + ". " : ""}${selectedResident.Lastname}${selectedResident.Suffix ? " " + selectedResident.Suffix : ""}`.replace(/\s+/g, " ").trim(),
                     type_: "4Ps Certificate",
                     issued_date: formattedIssuedDate,
                     ownership_text: "",
                     civil_status: civilStatus || "",
-                    purpose: purpose === "custom" ? customPurpose || "" : purpose,
+                    purpose:
+                      purpose === "custom" ? customPurpose || "" : purpose,
                     age: age ? parseInt(age) : undefined,
                     or_number: orNumber,
                     amount: amount ? parseFloat(amount) : undefined,
@@ -525,14 +578,19 @@ export default function Fourps() {
                         ]}
                       >
                         <Text style={{ fontWeight: "bold" }}>
-                        {"         "}  This is to certify that{" "}
+                          {"         "} This is to certify that{" "}
                         </Text>
                         <Text style={{ fontWeight: "bold" }}>
-                          {`${selectedResident.Firstname} ${
-                            selectedResident.Middlename
-                              ? selectedResident.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.Lastname}`.toUpperCase()}
+                          {(editedResidentName ||
+                            `${selectedResident.Firstname} ${
+                              selectedResident.Middlename
+                                ? selectedResident.Middlename.charAt(0) + ". "
+                                : ""
+                            }${selectedResident.Lastname}${
+                              selectedResident.Suffix
+                                ? " " + selectedResident.Suffix
+                                : ""
+                            }`).toUpperCase()}
                         </Text>
                         <Text>
                           , {age || "___"} years old, {civilStatus || "___"},
@@ -551,8 +609,8 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        {"         "}  This certifies further that the above-named person is a
-                        member of the{" "}
+                        {"         "} This certifies further that the
+                        above-named person is a member of the{" "}
                         <Text style={{ fontWeight: "bold" }}>
                           4Ps (Programang Pantawid Pamilyang Pilipino)
                         </Text>{" "}
@@ -567,8 +625,9 @@ export default function Fourps() {
                           { textAlign: "justify", marginBottom: 8 },
                         ]}
                       >
-                        {"         "} This certification is issued upon request of the
-                        interested party for record and reference purposes.
+                        {"         "} This certification is issued upon request
+                        of the interested party for record and reference
+                        purposes.
                       </Text>
                       <Text style={[styles.bodyText, { marginTop: 8 }]}></Text>
                       <Text

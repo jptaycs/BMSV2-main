@@ -180,7 +180,7 @@ export default function Residents() {
   };
 
   const handleDownloadAllResidents = () =>
-    setPendingDownload({ filename: "ResidentRecords.csv", filter: "All Residents", filteredResidents: res });
+    setPendingDownload({ filename: "ResidentRecords.csv", filter: "Filtered Residents", filteredResidents: filteredData });
 
   const handleDownloadMaleResidents = () =>
     setPendingDownload({

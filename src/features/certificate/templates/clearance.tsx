@@ -29,7 +29,6 @@ import getSettings from "@/service/api/settings/getSettings";
 import getResident from "@/service/api/resident/getResident";
 import { useAddCertificate } from "@/features/api/certificate/useAddCertificate";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Virtuoso } from "react-virtuoso";
 import {
   Select,
@@ -42,13 +41,13 @@ import { ArrowLeftCircleIcon, Check, ChevronsUpDown } from "lucide-react";
 import CertificateHeader from "../certificateHeader";
 import CertificateFooter from "../certificateFooter";
 import { Resident } from "@/types/apitypes";
+import { NavLink } from "react-router-dom";
 
 if (!window.Buffer) {
   window.Buffer = Buffer;
 }
 
 export default function Clearance() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -62,11 +61,22 @@ export default function Clearance() {
   // O.R. Number and Amount state
   const [orNumber, setOrNumber] = useState("");
   const [amount, setAmount] = useState("100");
+  // Editable Resident Name state
+  const [editableResidentName, setEditableResidentName] = useState("");
   const documentaryStampDate = new Date().toLocaleDateString("en-PH", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+  // Helper function to format resident name
+  const formatResidentName = (res: Resident, withInitial = true) => {
+    const middleInitial =
+      withInitial && res.Middlename
+        ? `${res.Middlename.charAt(0)}. `
+        : "";
+    const suffix = res.Suffix ? ` ${res.Suffix}` : "";
+    return `${res.Firstname} ${middleInitial}${res.Lastname}${suffix}`.trim();
+  };
   const purposeOptions = [
     "Employment",
     "Bank Requirement",
@@ -87,11 +97,14 @@ export default function Clearance() {
     "Separated",
   ];
   const allResidents = useMemo(() => {
-    return residents.map((res) => ({
-      value: `${res.Firstname} ${res.Lastname}`.toLowerCase(),
-      label: `${res.Firstname} ${res.Lastname}`,
-      data: res,
-    }));
+    return residents.map((res) => {
+      const name = formatResidentName(res);
+      return {
+        value: name.toLowerCase(),
+        label: name,
+        data: res,
+      };
+    });
   }, [residents]);
   const [search, setSearch] = useState("");
   const filteredResidents = useMemo(() => {
@@ -179,6 +192,7 @@ export default function Clearance() {
               setAge(calculatedAge.toString());
             }
             setCivilStatus(selected.CivilStatus || "");
+            setEditableResidentName(formatResidentName(selected));
           }
         }
       })
@@ -204,11 +218,16 @@ export default function Clearance() {
         <Card className="flex-2 flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex gap-2 items-center justify-start">
-              <ArrowLeftCircleIcon
-                className="h-8 w-8"
-                onClick={() => navigate(-1)}
-              />
-              Barangay Clearance
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2 text-primary hover:text-primary/80 text-lg p-4"
+              >
+                <NavLink to="/certificates" className="flex items-center gap-2">
+                  <ArrowLeftCircleIcon className="h-10 w-10" />
+                  Back
+                </NavLink>
+              </Button>
             </CardTitle>
             <CardDescription className="text-start">
               Please fill out the necessary information needed for Barangay
@@ -277,6 +296,7 @@ export default function Clearance() {
                                       setAge("");
                                     }
                                     setCivilStatus(selected.CivilStatus || "");
+                                    setEditableResidentName(formatResidentName(selected));
                                     setValue(
                                       currentValue === value ? "" : currentValue
                                     );
@@ -302,6 +322,20 @@ export default function Clearance() {
                   </Command>
                 </PopoverContent>
               </Popover>
+            </div>
+            {/* Editable Resident Name input */}
+            <div className="mt-4">
+              <label htmlFor="editableResidentName" className="block text-sm font-medium text-gray-700 mb-1">
+                Edit Resident Name
+              </label>
+              <input
+                id="editableResidentName"
+                type="text"
+                value={editableResidentName}
+                onChange={(e) => setEditableResidentName(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Edit resident name here"
+              />
             </div>
             <div className="mt-4">
               <label
@@ -477,11 +511,7 @@ export default function Clearance() {
                 try {
                   const cert: any = {
                     resident_id: selectedResident.ID,
-                    resident_name: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}`,
+                    resident_name: editableResidentName.trim() || formatResidentName(selectedResident),
                     type_: "Barangay Clearance",
                     issued_date: new Date()
                       .toLocaleString("en-CA", { hour12: false })
@@ -496,11 +526,7 @@ export default function Clearance() {
                   };
                   await addCertificate(cert);
                   toast.success("Certificate saved successfully!", {
-                    description: `${selectedResident.Firstname} ${
-                      selectedResident.Middlename
-                        ? selectedResident.Middlename.charAt(0) + ". "
-                        : ""
-                    }${selectedResident.Lastname}'s certificate was saved.`,
+                    description: `${editableResidentName.trim() || formatResidentName(selectedResident)}'s certificate was saved.`,
                   });
                 } catch (error) {
                   console.error("Save certificate failed:", error);
@@ -547,11 +573,7 @@ export default function Clearance() {
                       >
                        {"         "}This is to certify that{" "}
                         <Text style={{ fontWeight: "bold" }}>
-                          {`${selectedResident.Firstname} ${
-                            selectedResident.Middlename
-                              ? selectedResident.Middlename.charAt(0) + ". "
-                              : ""
-                          }${selectedResident.Lastname}`.toUpperCase()}
+                          {editableResidentName.trim().toUpperCase() || formatResidentName(selectedResident).toUpperCase()}
                         </Text>
                         {`, ${age || "___"} years old, ${
                           civilStatus || "___"
