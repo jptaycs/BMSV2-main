@@ -1,3 +1,4 @@
+import { useOfficial } from "@/features/api/official/useOfficial";
 import { Button } from "@/components/ui/button";
 import { pdf } from "@react-pdf/renderer";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
@@ -657,41 +658,50 @@ export default function ViewBlotterModal({
                 <div className="flex gap-2">
                   {step < 2 && (
                     <>
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          const blob = await pdf(
-                            <SummonPDF
-                              filter="Blotter Report"
-                              blotters={[blotter]}
-                            />
-                          ).toBlob();
-                          const buffer = await blob.arrayBuffer();
-                          const contents = new Uint8Array(buffer);
-                          try {
-                            await writeFile(
-                              `Blotter_${blotter.ID}.pdf`,
-                              contents,
-                              {
-                                baseDir: BaseDirectory.Document,
+                      {(() => {
+                        const { data: officialsResponse } = useOfficial();
+                        const officials = Array.isArray(officialsResponse)
+                          ? officialsResponse
+                          : officialsResponse?.officials;
+                        return (
+                          <Button
+                            type="button"
+                            onClick={async () => {
+                              const blob = await pdf(
+                                <SummonPDF
+                                  filter="Blotter Report"
+                                  blotters={[blotter]}
+                                  officials={officials}
+                                />
+                              ).toBlob();
+                              const buffer = await blob.arrayBuffer();
+                              const contents = new Uint8Array(buffer);
+                              try {
+                                await writeFile(
+                                  `Blotter_${blotter.ID}.pdf`,
+                                  contents,
+                                  {
+                                    baseDir: BaseDirectory.Document,
+                                  }
+                                );
+                                toast.success(
+                                  "Blotter PDF successfully downloaded",
+                                  {
+                                    description:
+                                      "The blotter report is saved in Documents folder",
+                                  }
+                                );
+                              } catch (e) {
+                                toast.error("Error", {
+                                  description: "Failed to save the blotter PDF",
+                                });
                               }
-                            );
-                            toast.success(
-                              "Blotter PDF successfully downloaded",
-                              {
-                                description:
-                                  "The blotter report is saved in Documents folder",
-                              }
-                            );
-                          } catch (e) {
-                            toast.error("Error", {
-                              description: "Failed to save the blotter PDF",
-                            });
-                          }
-                        }}
-                      >
-                        Download Blotter
-                      </Button>
+                            }}
+                          >
+                            Download Blotter
+                          </Button>
+                        );
+                      })()}
                       <Button
                         type="button"
                         onClick={() => setStep((prev) => prev + 1)}
